@@ -63,7 +63,7 @@
         .day-section { background-color: var(--card-bg); border-radius: var(--border-radius); box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden; }
 
         .day-header { padding: 15px 20px; font-size: 1.3rem; font-weight: bold; color: var(--primary); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .header-right { display: flex; align-items: center; gap: 15px; }
+        .header-left { display: flex; align-items: center; gap: 15px; }
         .toggle-arrow { font-size: 0.9rem; transition: transform 0.3s; }
 
         .day-section.active .toggle-arrow { transform: rotate(180deg); }
@@ -173,14 +173,14 @@
 
                 section.innerHTML = `
                     <div class="day-header" onclick="toggleDay(this)">
-                        <span>${day}</span>
-                        <div class="header-right">
+                        <div class="header-left">
                             <label class="custom-checkbox" onclick="event.stopPropagation()">
                                 <input type="checkbox" onchange="toggleDayDone('${day}', this.checked)" ${isChecked}>
                                 <span class="checkmark"></span>
                             </label>
-                            <span class="toggle-arrow">▼</span>
+                            <span>${day}</span>
                         </div>
+                        <span class="toggle-arrow">▼</span>
                     </div>
                     <div class="day-content">
                         <ul class="item-list">
@@ -249,6 +249,29 @@
             }
         }
 
+        // Funkce pro automatický reset splněných dnů v pondělí
+        function checkAndResetMonday(data) {
+            const today = new Date();
+            // getDay() vrací 1 pro pondělí
+            if (today.getDay() === 1) {
+                const dateString = today.toISOString().split('T')[0]; // Získá text ve formátu YYYY-MM-DD
+                const lastReset = localStorage.getItem('prayerAppLastReset');
+
+                if (lastReset !== dateString) {
+                    let wasChanged = false;
+                    for (let dayKey in data) {
+                        if (data[dayKey].isDone) {
+                            data[dayKey].isDone = false;
+                            wasChanged = true;
+                        }
+                    }
+                    localStorage.setItem('prayerAppLastReset', dateString);
+                    return wasChanged; // Pokud se něco zrušilo, vrátí true pro uložení
+                }
+            }
+            return false;
+        }
+
         let userPin = localStorage.getItem('prayerAppPin');
         if (!userPin) {
             userPin = prompt("Zadej přístupový PIN pro načtení seznamu:");
@@ -256,10 +279,12 @@
         }
 
         async function loadDataFromSheets() {
-            // Pokus načíst lokální zálohu jako záchranu, pokud nemáš vyplněnou URL
             if(WEB_APP_URL === 'https://script.google.com/macros/s/AKfycbxkAp7w3dIWrevXJexgk9MzzFpRZeCLc7RieIqFIMFf6QebyAbs5P1NhPSIXeA4Ggoa/exec') {
                 const cached = localStorage.getItem('prayerAppCache');
-                if (cached) prayerData = JSON.parse(cached);
+                if (cached) {
+                    prayerData = JSON.parse(cached);
+                    if (checkAndResetMonday(prayerData)) saveDataToSheets();
+                }
                 return renderApp();
             }
 
@@ -277,13 +302,20 @@
 
                 if (data && Object.keys(data).length > 0) {
                     prayerData = data;
-                    localStorage.setItem('prayerAppCache', JSON.stringify(prayerData)); // Uloží čerstvou zálohu do mobilu
+                    if (checkAndResetMonday(prayerData)) {
+                        saveDataToSheets();
+                    } else {
+                        localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
+                    }
                 }
                 renderApp();
             } catch (error) {
                 console.error("Chyba načítání, načítám z offline zálohy telefonu:", error);
                 const cached = localStorage.getItem('prayerAppCache');
-                if (cached) prayerData = JSON.parse(cached);
+                if (cached) {
+                    prayerData = JSON.parse(cached);
+                    if (checkAndResetMonday(prayerData)) saveDataToSheets();
+                }
                 renderApp();
             } finally {
                 document.getElementById('loader').style.display = 'none';
@@ -291,7 +323,6 @@
         }
 
         async function saveDataToSheets() {
-            // Nejdůležitější úprava: Data se VŽDY ihned uloží i lokálně na tvém Pixelu
             localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
 
             if(WEB_APP_URL === 'https://script.google.com/macros/s/AKfycbxkAp7w3dIWrevXJexgk9MzzFpRZeCLc7RieIqFIMFf6QebyAbs5P1NhPSIXeA4Ggoa/exec') return;
