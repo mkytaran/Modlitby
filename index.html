@@ -2,16 +2,13 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
-    <!-- Přidáno viewport-fit=cover pro roztažení pod systémové lišty -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 
-    <!-- Zakáže Pixelu vnucovat svůj systémový tmavý režim do hlavičky -->
     <meta name="color-scheme" content="light dark">
     <meta name="theme-color" content="#e2bb7b">
 
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <!-- Zajištění průhledné hlavičky -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
     <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiTW9kbGl0YnkiLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsInN0YXJ0X3VybCI6Ii4iLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2UyYmI3YiIsInRoZW1lX2NvbG9yIjoiI2UyYmI3YiIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWw7Y2hhcnNldD11dGYtOCwlM0NzdmcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJyB2aWV3Qm94PScwIDAgMTAwIDEwMCclM0UlM0NjaXJjbGUgY3g9JzUwJyBjeT0nNTAnIHI9JzUwJyBmaWxsPSclMjNlMmJiN2InLyUzRSUzQ3RleHQgeD0nNTAnIHk9JzY4JyBmb250LXNpemU9JzQ1JyB0ZXh0LWFuY2hvcj0nbWlkZGxlJyUzRfCfmY8lM0MvdGV4dCUzRSUzQy9zdmclM0UiLCJzaXplcyI6IjE5MngxOTIgNTEyeDUxMiBhbnkiLCJ0eXBlIjoiaW1hZ2Uvc3ZnK3htbCJ9XX0=">
@@ -54,7 +51,6 @@
         body {
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             color: var(--text-color);
-            /* Dynamické odsazení pro bezpečné vykreslení pod lištami */
             padding: calc(15px + env(safe-area-inset-top)) 15px calc(40px + env(safe-area-inset-bottom)) 15px;
             touch-action: manipulation;
         }
@@ -106,7 +102,7 @@
         <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">🌙 Noc</button>
     </div>
 
-    <div id="loader" class="loader">Synchronizace s tabulkou...</div>
+    <div id="loader" class="loader">Synchronizace...</div>
     <div class="accordion" id="app"></div>
 
     <div class="modal-overlay" id="noteModal">
@@ -119,8 +115,8 @@
     </div>
 
     <script>
-        // ZDE ZNOVU VLOŽ SVŮJ ODKAZ NA APPS SCRIPT:
-        const WEB_APP_URL = 'ZDE_VLOZ_URL_APPS_SCRIPTU';
+        // ZDE MUSÍ BÝT TVÁ URL ADRESA Z GOOGLE APPS SCRIPTU:
+        const WEB_APP_URL = 'https://script.google.com/macros/library/d/1DyJD32ssPsU35kXllq2wQA9w0GeS611Li73JsJ9BM2vWlr6M2wuPykpW/6';
 
         const daysOfWeek = ['Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota', 'Neděle'];
         let prayerData = {};
@@ -260,7 +256,13 @@
         }
 
         async function loadDataFromSheets() {
-            if(WEB_APP_URL === 'ZDE_VLOZ_URL_APPS_SCRIPTU') return renderApp();
+            // Pokus načíst lokální zálohu jako záchranu, pokud nemáš vyplněnou URL
+            if(WEB_APP_URL === 'https://script.google.com/macros/library/d/1DyJD32ssPsU35kXllq2wQA9w0GeS611Li73JsJ9BM2vWlr6M2wuPykpW/6') {
+                const cached = localStorage.getItem('prayerAppCache');
+                if (cached) prayerData = JSON.parse(cached);
+                return renderApp();
+            }
+
             document.getElementById('loader').style.display = 'block';
             try {
                 const response = await fetch(WEB_APP_URL + '?pin=' + encodeURIComponent(userPin));
@@ -273,17 +275,27 @@
                     return;
                 }
 
-                if (data && Object.keys(data).length > 0) prayerData = data;
+                if (data && Object.keys(data).length > 0) {
+                    prayerData = data;
+                    localStorage.setItem('prayerAppCache', JSON.stringify(prayerData)); // Uloží čerstvou zálohu do mobilu
+                }
                 renderApp();
             } catch (error) {
-                console.error("Chyba načítání:", error);
+                console.error("Chyba načítání, načítám z offline zálohy telefonu:", error);
+                const cached = localStorage.getItem('prayerAppCache');
+                if (cached) prayerData = JSON.parse(cached);
+                renderApp();
             } finally {
                 document.getElementById('loader').style.display = 'none';
             }
         }
 
         async function saveDataToSheets() {
-            if(WEB_APP_URL === 'ZDE_VLOZ_URL_APPS_SCRIPTU') return;
+            // Nejdůležitější úprava: Data se VŽDY ihned uloží i lokálně na tvém Pixelu
+            localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
+
+            if(WEB_APP_URL === 'https://script.google.com/macros/library/d/1DyJD32ssPsU35kXllq2wQA9w0GeS611Li73JsJ9BM2vWlr6M2wuPykpW/6') return;
+
             document.getElementById('loader').style.display = 'block';
             try {
                 await fetch(WEB_APP_URL, {
@@ -292,7 +304,7 @@
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }
                 });
             } catch (error) {
-                console.error("Chyba ukládání:", error);
+                console.error("Nepodařilo se odeslat do Googlu. Data jsou uložena lokálně.", error);
             } finally {
                 document.getElementById('loader').style.display = 'none';
             }
