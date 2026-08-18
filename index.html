@@ -116,7 +116,7 @@
 
     <script>
         // ZDE MUSÍ BÝT TVÁ URL ADRESA Z GOOGLE APPS SCRIPTU:
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyUNzO8E_C-TeLGCCAYL0YUwrnvYLa_Lve2BQi-B55BZw6KhK1_-2NuKhWI48KQ35-jHw/exec';
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxkAp7w3dIWrevXJexgk9MzzFpRZeCLc7RieIqFIMFf6QebyAbs5P1NhPSIXeA4Ggoa/exec';
 
         const daysOfWeek = ['Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota', 'Neděle'];
         let prayerData = {};
@@ -257,7 +257,7 @@
 
         async function loadDataFromSheets() {
             // Pokus načíst lokální zálohu jako záchranu, pokud nemáš vyplněnou URL
-            if(WEB_APP_URL === 'https://script.google.com/macros/s/AKfycbyUNzO8E_C-TeLGCCAYL0YUwrnvYLa_Lve2BQi-B55BZw6KhK1_-2NuKhWI48KQ35-jHw/exec) {
+            if(WEB_APP_URL === 'https://script.google.com/macros/s/AKfycbxkAp7w3dIWrevXJexgk9MzzFpRZeCLc7RieIqFIMFf6QebyAbs5P1NhPSIXeA4Ggoa/exec') {
                 const cached = localStorage.getItem('prayerAppCache');
                 if (cached) prayerData = JSON.parse(cached);
                 return renderApp();
@@ -294,7 +294,7 @@
             // Nejdůležitější úprava: Data se VŽDY ihned uloží i lokálně na tvém Pixelu
             localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
 
-            if(WEB_APP_URL === 'https://script.google.com/macros/s/AKfycbyUNzO8E_C-TeLGCCAYL0YUwrnvYLa_Lve2BQi-B55BZw6KhK1_-2NuKhWI48KQ35-jHw/exec') return;
+            if(WEB_APP_URL === 'https://script.google.com/macros/s/AKfycbxkAp7w3dIWrevXJexgk9MzzFpRZeCLc7RieIqFIMFf6QebyAbs5P1NhPSIXeA4Ggoa/exec') return;
 
             document.getElementById('loader').style.display = 'block';
             try {
