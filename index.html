@@ -3,25 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-
+    
     <meta name="color-scheme" content="light dark">
     <meta name="theme-color" content="#e2bb7b">
-
+    
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
+    
     <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiTW9kbGl0YnkiLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsInN0YXJ0X3VybCI6Ii4iLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2UyYmI3YiIsInRoZW1lX2NvbG9yIjoiI2UyYmI3YiIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWw7Y2hhcnNldD11dGYtOCwlM0NzdmcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJyB2aWV3Qm94PScwIDAgMTAwIDEwMCclM0UlM0NjaXJjbGUgY3g9JzUwJyBjeT0nNTAnIHI9JzUwJyBmaWxsPSclMjNlMmJiN2InLyUzRSUzQ3RleHQgeD0nNTAnIHk9JzY4JyBmb250LXNpemU9JzQ1JyB0ZXh0LWFuY2hvcj0nbWlkZGxlJyUzRfCfmY8lM0MvdGV4dCUzRSUzQy9zdmclM0UiLCJzaXplcyI6IjE5MngxOTIgNTEyeDUxMiBhbnkiLCJ0eXBlIjoiaW1hZ2Uvc3ZnK3htbCJ9XX0=">
     <link rel="icon" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23e2bb7b'/%3E%3Ctext x='50' y='68' font-size='45' text-anchor='middle'%3E🙏%3C/text%3E%3C/svg%3E">
     <link rel="apple-touch-icon" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23e2bb7b'/%3E%3Ctext x='50' y='68' font-size='45' text-anchor='middle'%3E🙏%3C/text%3E%3C/svg%3E">
-
+    
     <title>Modlitební seznam</title>
     <style>
         :root {
-            --bg-color: #e2bb7b;
-            --card-bg: #fcf6ea;
-            --text-color: #3e2723;
-            --primary: #8c5226;
+            --bg-color: #e2bb7b; 
+            --card-bg: #fcf6ea; 
+            --text-color: #3e2723; 
+            --primary: #8c5226; 
             --item-bg: #f2e0c1;
             --input-bg: #ffffff;
             --border-color: #d1b894;
@@ -52,20 +52,21 @@
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             color: var(--text-color);
             padding: calc(15px + env(safe-area-inset-top)) 15px calc(40px + env(safe-area-inset-bottom)) 15px;
-            touch-action: manipulation;
+            touch-action: manipulation; 
         }
 
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
         h1 { color: var(--primary); margin: 0; font-size: 1.5rem; }
-        .theme-btn { background-color: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); padding: 10px 15px; border-radius: 20px; font-size: 0.9rem; cursor: pointer; }
+        .header-buttons { display: flex; gap: 8px; }
+        .theme-btn { background-color: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; }
         .loader { display: none; text-align: center; padding: 10px; color: var(--primary); font-weight: bold; }
         .accordion { display: flex; flex-direction: column; gap: 15px; }
         .day-section { background-color: var(--card-bg); border-radius: var(--border-radius); box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden; }
-
+        
         .day-header { padding: 15px 20px; font-size: 1.3rem; font-weight: bold; color: var(--primary); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
         .header-left { display: flex; align-items: center; gap: 15px; }
         .toggle-arrow { font-size: 0.9rem; transition: transform 0.3s; }
-
+        
         .day-section.active .toggle-arrow { transform: rotate(180deg); }
         .day-section.active .day-header { border-bottom: 1px solid var(--border-color); }
         .day-content { display: none; padding: 20px; }
@@ -74,7 +75,7 @@
         .custom-checkbox { position: relative; width: 38px; height: 38px; cursor: pointer; display: block; }
         .custom-checkbox input { opacity: 0; width: 0; height: 0; }
         .checkmark { position: absolute; top: 0; left: 0; height: 100%; width: 100%; background-color: transparent; border: 2px solid var(--border-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-
+        
         [data-theme="dark"] .checkmark { border-color: var(--primary); }
         .custom-checkbox input:checked ~ .checkmark { background-color: #e2bb7b; border-color: #e2bb7b; }
         .custom-checkbox input:checked ~ .checkmark::after { content: '🙏'; font-size: 20px; }
@@ -99,7 +100,10 @@
 
     <div class="header-container">
         <h1>Modlitby</h1>
-        <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">🌙 Noc</button>
+        <div class="header-buttons">
+            <button class="theme-btn" onclick="downloadBackup()">💾 Uložit do mobilu</button>
+            <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">🌙 Noc</button>
+        </div>
     </div>
 
     <div id="loader" class="loader">Synchronizace...</div>
@@ -115,7 +119,6 @@
     </div>
 
     <script>
-        // ZDE MUSÍ BÝT TVÁ URL ADRESA Z GOOGLE APPS SCRIPTU:
         const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxkAp7w3dIWrevXJexgk9MzzFpRZeCLc7RieIqFIMFf6QebyAbs5P1NhPSIXeA4Ggoa/exec';
 
         const daysOfWeek = ['Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota', 'Neděle'];
@@ -157,7 +160,7 @@
                 const section = document.createElement('div');
                 section.className = `day-section ${openDays.includes(day) ? 'active' : ''}`;
                 section.dataset.day = day;
-
+                
                 let itemsHtml = dayObj.items.map(item => `
                     <li class="item">
                         <div class="item-name" onclick="openModal('${day}', '${item.id}')">
@@ -242,21 +245,19 @@
                 const itemIndex = prayerData[day].items.findIndex(i => i.id === id);
                 if (itemIndex !== -1) {
                     prayerData[day].items[itemIndex].notes = modalNotes.value;
-                    renderApp();
+                    renderApp(); 
                     closeModal();
                     saveDataToSheets();
                 }
             }
         }
 
-        // Funkce pro automatický reset splněných dnů v pondělí
         function checkAndResetMonday(data) {
             const today = new Date();
-            // getDay() vrací 1 pro pondělí
             if (today.getDay() === 1) {
-                const dateString = today.toISOString().split('T')[0]; // Získá text ve formátu YYYY-MM-DD
+                const dateString = today.toISOString().split('T')[0];
                 const lastReset = localStorage.getItem('prayerAppLastReset');
-
+                
                 if (lastReset !== dateString) {
                     let wasChanged = false;
                     for (let dayKey in data) {
@@ -266,7 +267,7 @@
                         }
                     }
                     localStorage.setItem('prayerAppLastReset', dateString);
-                    return wasChanged; // Pokud se něco zrušilo, vrátí true pro uložení
+                    return wasChanged;
                 }
             }
             return false;
@@ -279,7 +280,7 @@
         }
 
         async function loadDataFromSheets() {
-            if(WEB_APP_URL === 'https://script.google.com/macros/s/AKfycbxkAp7w3dIWrevXJexgk9MzzFpRZeCLc7RieIqFIMFf6QebyAbs5P1NhPSIXeA4Ggoa/exec') {
+            if(WEB_APP_URL === 'ZDE_VLOZ_URL_APPS_SCRIPTU') {
                 const cached = localStorage.getItem('prayerAppCache');
                 if (cached) {
                     prayerData = JSON.parse(cached);
@@ -287,20 +288,36 @@
                 }
                 return renderApp();
             }
-
+            
             document.getElementById('loader').style.display = 'block';
+
             try {
                 const response = await fetch(WEB_APP_URL + '?pin=' + encodeURIComponent(userPin));
                 const data = await response.json();
-
+                
                 if (data.error) {
-                    alert("Špatný PIN kód! Přístup odepřen.");
                     localStorage.removeItem('prayerAppPin');
-                    location.reload();
+                    location.reload(); 
                     return;
                 }
 
-                if (data && Object.keys(data).length > 0) {
+                const cached = localStorage.getItem('prayerAppCache');
+                const localData = cached ? JSON.parse(cached) : null;
+                
+                let serverIsBasicallyEmpty = true;
+                if (data) {
+                    for (let key in data) {
+                        if (data[key] && data[key].items && data[key].items.length > 0) {
+                            serverIsBasicallyEmpty = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (serverIsBasicallyEmpty && localData) {
+                    prayerData = localData;
+                    saveDataToSheets(); 
+                } else if (data && Object.keys(data).length > 0) {
                     prayerData = data;
                     if (checkAndResetMonday(prayerData)) {
                         saveDataToSheets();
@@ -310,7 +327,6 @@
                 }
                 renderApp();
             } catch (error) {
-                console.error("Chyba načítání, načítám z offline zálohy telefonu:", error);
                 const cached = localStorage.getItem('prayerAppCache');
                 if (cached) {
                     prayerData = JSON.parse(cached);
@@ -325,9 +341,10 @@
         async function saveDataToSheets() {
             localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
 
-            if(WEB_APP_URL === 'https://script.google.com/macros/s/AKfycbxkAp7w3dIWrevXJexgk9MzzFpRZeCLc7RieIqFIMFf6QebyAbs5P1NhPSIXeA4Ggoa/exec') return;
-
+            if(WEB_APP_URL === 'ZDE_VLOZ_URL_APPS_SCRIPTU') return;
+            
             document.getElementById('loader').style.display = 'block';
+            
             try {
                 await fetch(WEB_APP_URL, {
                     method: 'POST',
@@ -335,10 +352,19 @@
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }
                 });
             } catch (error) {
-                console.error("Nepodařilo se odeslat do Googlu. Data jsou uložena lokálně.", error);
             } finally {
                 document.getElementById('loader').style.display = 'none';
             }
+        }
+
+        function downloadBackup() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(prayerData, null, 2));
+            const downloadNode = document.createElement('a');
+            downloadNode.setAttribute("href", dataStr);
+            downloadNode.setAttribute("download", "modlitby_zaloha.json");
+            document.body.appendChild(downloadNode);
+            downloadNode.click();
+            downloadNode.remove();
         }
 
         loadDataFromSheets();
