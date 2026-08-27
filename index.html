@@ -5,369 +5,145 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
     <meta name="color-scheme" content="light dark">
-    <meta name="theme-color" content="#e2bb7b">
+    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
     
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-    <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiTW9kbGl0YnkiLCJkaXNwbGF5Ijoic3RhbmRhbG9uZSIsInN0YXJ0X3VybCI6Ii4iLCJiYWNrZ3JvdW5kX2NvbG9yIjoiI2UyYmI3YiIsInRoZW1lX2NvbG9yIjoiI2UyYmI3YiIsImljb25zIjpbeyJzcmMiOiJkYXRhOmltYWdlL3N2Zyt4bWw7Y2hhcnNldD11dGYtOCwlM0NzdmcgeG1sbnM9J2h0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnJyB2aWV3Qm94PScwIDAgMTAwIDEwMCclM0UlM0NjaXJjbGUgY3g9JzUwJyBjeT0nNTAnIHI9JzUwJyBmaWxsPSclMjNlMmJiN2InLyUzRSUzQ3RleHQgeD0nNTAnIHk9JzY4JyBmb250LXNpemU9JzQ1JyB0ZXh0LWFuY2hvcj0nbWlkZGxlJyUzRfCfmY8lM0MvdGV4dCUzRSUzQy9zdmclM0UiLCJzaXplcyI6IjE5MngxOTIgNTEyeDUxMiBhbnkiLCJ0eXBlIjoiaW1hZ2Uvc3ZnK3htbCJ9XX0=">
-    <link rel="icon" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23e2bb7b'/%3E%3Ctext x='50' y='68' font-size='45' text-anchor='middle'%3E🙏%3C/text%3E%3C/svg%3E">
-    <link rel="apple-touch-icon" href="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23e2bb7b'/%3E%3Ctext x='50' y='68' font-size='45' text-anchor='middle'%3E🙏%3C/text%3E%3C/svg%3E">
+    <!-- Propojení na externí soubory a ikonku -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon.png" type="image/png">
+    <link rel="apple-touch-icon" href="icon.png">
     
-    <title>Modlitební seznam</title>
-    <style>
-        :root {
-            --bg-color: #e2bb7b; 
-            --card-bg: #fcf6ea; 
-            --text-color: #3e2723; 
-            --primary: #8c5226; 
-            --item-bg: #f2e0c1;
-            --input-bg: #ffffff;
-            --border-color: #d1b894;
-            --modal-overlay: rgba(62, 39, 35, 0.6);
-            --border-radius: 12px;
-        }
-
-        [data-theme="dark"] {
-            --bg-color: #1a1816;
-            --card-bg: #2a2622;
-            --text-color: #e0d8c8;
-            --primary: #b8865c;
-            --item-bg: #36312c;
-            --input-bg: #23201c;
-            --border-color: #4a433d;
-            --modal-overlay: rgba(0, 0, 0, 0.7);
-        }
-
-        html, body {
-            background-color: var(--bg-color);
-            min-height: 100vh;
-            margin: 0;
-            overscroll-behavior-y: none;
-            transition: background-color 0.3s;
-        }
-
-        body {
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            color: var(--text-color);
-            padding: calc(15px + env(safe-area-inset-top)) 15px calc(40px + env(safe-area-inset-bottom)) 15px;
-            touch-action: manipulation; 
-        }
-
-        .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-        h1 { color: var(--primary); margin: 0; font-size: 1.5rem; }
-        .header-buttons { display: flex; gap: 8px; }
-        .theme-btn { background-color: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; }
-        .loader { display: none; text-align: center; padding: 10px; color: var(--primary); font-weight: bold; }
-        .accordion { display: flex; flex-direction: column; gap: 15px; }
-        .day-section { background-color: var(--card-bg); border-radius: var(--border-radius); box-shadow: 0 4px 6px rgba(0,0,0,0.1); overflow: hidden; }
-        
-        .day-header { padding: 15px 20px; font-size: 1.3rem; font-weight: bold; color: var(--primary); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .header-left { display: flex; align-items: center; gap: 15px; }
-        .toggle-arrow { font-size: 0.9rem; transition: transform 0.3s; }
-        
-        .day-section.active .toggle-arrow { transform: rotate(180deg); }
-        .day-section.active .day-header { border-bottom: 1px solid var(--border-color); }
-        .day-content { display: none; padding: 20px; }
-        .day-section.active .day-content { display: block; }
-
-        .custom-checkbox { position: relative; width: 38px; height: 38px; cursor: pointer; display: block; }
-        .custom-checkbox input { opacity: 0; width: 0; height: 0; }
-        .checkmark { position: absolute; top: 0; left: 0; height: 100%; width: 100%; background-color: transparent; border: 2px solid var(--border-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-        
-        [data-theme="dark"] .checkmark { border-color: var(--primary); }
-        .custom-checkbox input:checked ~ .checkmark { background-color: #e2bb7b; border-color: #e2bb7b; }
-        .custom-checkbox input:checked ~ .checkmark::after { content: '🙏'; font-size: 20px; }
-
-        .item-list { list-style-type: none; padding: 0; margin: 0 0 15px 0; }
-        .item { background-color: var(--item-bg); margin-bottom: 10px; padding: 15px; border-radius: var(--border-radius); display: flex; justify-content: space-between; align-items: center; }
-        .item-name { flex-grow: 1; font-size: 1.1rem; }
-        .item-actions { display: flex; gap: 10px; }
-        .icon-btn { background: none; border: none; font-size: 1.2rem; padding: 5px; color: var(--text-color); cursor: pointer; }
-        .add-form { display: flex; gap: 10px; }
-        .add-input { flex-grow: 1; padding: 12px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--input-bg); color: var(--text-color); font-size: 1rem; }
-        .btn { background-color: var(--primary); color: #ffffc7; border: none; padding: 12px 20px; border-radius: var(--border-radius); font-size: 1rem; font-weight: bold; }
-        [data-theme="dark"] .btn { color: #1a1816; }
-
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--modal-overlay); justify-content: center; align-items: center; z-index: 1000; padding: 15px; }
-        .modal-content { background-color: var(--card-bg); padding: 25px; border-radius: var(--border-radius); width: 100%; max-width: 400px; position: relative; }
-        .close-btn { position: absolute; top: 15px; right: 15px; font-size: 1.8rem; color: var(--text-color); }
-        textarea { width: 100%; padding: 15px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--input-bg); color: var(--text-color); margin-bottom: 15px; resize: vertical; box-sizing: border-box; font-family: inherit; font-size: 1rem; }
-    </style>
+    <title>Rozpočet</title>
+    
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="header-container">
-        <h1>Modlitby</h1>
-        <div class="header-buttons">
-            <button class="theme-btn" onclick="downloadBackup()">💾 Uložit do mobilu</button>
-            <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">🌙 Noc</button>
+    <div class="top-bar">
+        <h2 style="margin:0; font-size: 1.2rem; display: flex; align-items: center; gap: 10px;">
+            Rozpočet
+            <button class="icon-btn" onclick="openSettingsModal()">⚙️</button>
+            <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙</button>
+        </h2>
+        <div class="savings-badge" onclick="openSavingsModal()">
+            Úspory: <span id="totalSavingsDisplay">0</span> Kč
         </div>
     </div>
 
-    <div id="loader" class="loader">Synchronizace...</div>
-    <div class="accordion" id="app"></div>
+    <div class="hero-card">
+        <div class="hero-label">Dnes můžu utratit</div>
+        <div class="hero-amount" id="dailyLimitDisplay">0 Kč</div>
+        <button class="action-link" onclick="openManageModal()">⚙️ Spravovat zbytek</button>
+        
+        <div class="hero-sub">
+            <div>
+                Zbývá peněz
+                <span id="remainingMonthDisplay">0 Kč</span>
+                <small id="nextDaysDisplay">(0 Kč / den)</small>
+            </div>
+            <div>
+                Dní do konce
+                <span id="daysLeftDisplay">0</span>
+            </div>
+        </div>
+    </div>
 
-    <div class="modal-overlay" id="noteModal">
+    <div class="input-section">
+        <div class="amount-input-wrapper">
+            <input type="number" id="quickAmount" class="amount-input" placeholder="Zadej útratu (Kč)..." inputmode="numeric">
+        </div>
+        
+        <div class="quick-tags">
+            <button class="tag-btn" onclick="openCustomModal('🛒 Potraviny')"><span style="font-size: 1.5rem;">🛒</span> Potraviny</button>
+            <button class="tag-btn" onclick="openCustomModal('☕ Kafe')"><span style="font-size: 1.5rem;">☕</span> Kafe</button>
+            <button class="tag-btn" onclick="openCustomModal('🚗 Doprava')"><span style="font-size: 1.5rem;">🚗</span> Doprava</button>
+            <button class="tag-btn" onclick="openCustomModal('🍽️ Jídlo venku')"><span style="font-size: 1.5rem;">🍽️</span> Jídlo venku</button>
+            <button class="tag-btn" onclick="openCustomModal('🎉 Zábava')"><span style="font-size: 1.5rem;">🎉</span> Zábava</button>
+            <button class="tag-btn custom" onclick="openCustomModal('')"><span style="font-size: 1.5rem;">📝</span> Jiné...</button>
+        </div>
+    </div>
+
+    <div class="hero-card" style="padding: 15px 20px;">
+        <div class="hero-label" style="margin-bottom: 15px; text-align: left;">Tento měsíc</div>
+        <ul class="expense-list" id="expenseList"></ul>
+    </div>
+
+    <div class="modal-overlay" id="savingsModal">
         <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h2 id="modal-title" style="color: var(--primary); margin-top:0;">Název</h2>
-            <textarea id="modal-notes" rows="6" placeholder="Tvé poznámky..."></textarea>
-            <button class="btn" onclick="saveNotes()" style="width: 100%;">Uložit poznámky</button>
+            <h2>Správa úspor 💰</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">
+                Aktuálně máš naspořeno <strong id="modalCurrentSavings" style="color: var(--primary);">0 Kč</strong>.
+            </p>
+            <input type="number" id="savingsManageInput" inputmode="numeric" placeholder="Zadej částku (Kč)" style="text-align: center; font-weight: bold; font-size: 1.5rem; margin-bottom: 20px;">
+            <button class="btn" style="margin-bottom: 10px;" onclick="addDirectToSavings()">⬇️ Přesunout z rozpočtu do úspor</button>
+            <button class="btn" style="margin-bottom: 20px; background-color: var(--border-color); color: var(--text-color);" onclick="withdrawDirectFromSavings()">⬆️ Vrátit z úspor do rozpočtu</button>
+            <button class="btn" style="background-color: transparent; color: var(--text-muted); text-decoration: underline;" onclick="closeSavingsModal()">Zavřít</button>
         </div>
     </div>
 
-    <script>
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxkAp7w3dIWrevXJexgk9MzzFpRZeCLc7RieIqFIMFf6QebyAbs5P1NhPSIXeA4Ggoa/exec';
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content">
+            <h2>Nastavení</h2>
+            <h3 style="font-size: 1rem; margin-top: 20px; margin-bottom: 10px;">Změnit rozpočet na tento měsíc</h3>
+            <div style="display: flex; gap: 10px; margin-bottom: 30px;">
+                <input type="number" id="editIncomeInput" inputmode="numeric" style="margin-bottom: 0; flex-grow: 1;">
+                <button class="btn" style="width: auto; padding: 0 20px;" onclick="saveEditedIncome()">Uložit</button>
+            </div>
+            <button class="btn" style="background-color: var(--border-color); color: var(--text-color); margin-bottom: 15px;" onclick="forceRecalculate()">➗ Přepočítat a srovnat limity</button>
+            <button class="btn" style="background-color: var(--danger); color: white; margin-bottom: 25px;" onclick="hardResetApp()">⚠️ Vymazat data a začít znovu</button>
+            <button class="btn" style="background-color: transparent; color: var(--text-muted); text-decoration: underline;" onclick="closeSettingsModal()">Zavřít</button>
+        </div>
+    </div>
 
-        const daysOfWeek = ['Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'Sobota', 'Neděle'];
-        let prayerData = {};
-        daysOfWeek.forEach(day => { prayerData[day] = { isDone: false, items: [] }; });
+    <div class="modal-overlay" id="incomeModal">
+        <div class="modal-content">
+            <h2>Nový měsíc! 💸</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">Zadej svůj rozpočet (příjem) na aktuální měsíc. Předchozí zůstatek byl přesunut do úspor.</p>
+            <input type="number" id="incomeInput" placeholder="Zadej částku (Kč)" inputmode="numeric">
+            <button class="btn" onclick="saveIncome()">Uložit a začít měsíc</button>
+        </div>
+    </div>
 
-        const themeBtn = document.getElementById('themeToggle');
-        if (localStorage.getItem('prayerTheme') === 'dark') {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            themeBtn.textContent = '☀️ Den';
-            document.querySelector('meta[name="theme-color"]').setAttribute('content', '#1a1816');
-        }
+    <div class="modal-overlay" id="dailyActionModal">
+        <div class="modal-content">
+            <h2>Nový den! ☀️</h2>
+            <p style="color: var(--text-muted); margin-bottom: 20px;">
+                Za minulé dny ti v limitu zbylo <strong id="leftoverAmountDisplay" style="color: var(--primary); font-size: 1.2rem;">0 Kč</strong>.<br>
+                Co chceš s těmito penězi udělat?
+            </p>
+            <button class="btn" style="margin-bottom: 10px;" onclick="handleLeftover('dnesek')">⬇️ Přidat k dnešnímu dni</button>
+            <button class="btn" style="margin-bottom: 10px; background-color: var(--border-color); color: var(--text-color);" onclick="handleLeftover('rozpocitat')">➗ Rozpočítat do dalších dní</button>
+            <button class="btn" style="background-color: transparent; color: var(--text-color); border: 1px solid var(--border-color);" onclick="handleLeftover('usporit')">💰 Uspořit</button>
+        </div>
+    </div>
 
-        function toggleTheme() {
-            const root = document.documentElement;
-            const metaTheme = document.querySelector('meta[name="theme-color"]');
-            if (root.getAttribute('data-theme') === 'dark') {
-                root.removeAttribute('data-theme');
-                localStorage.setItem('prayerTheme', 'light');
-                themeBtn.textContent = '🌙 Noc';
-                metaTheme.setAttribute('content', '#e2bb7b');
-            } else {
-                root.setAttribute('data-theme', 'dark');
-                localStorage.setItem('prayerTheme', 'dark');
-                themeBtn.textContent = '☀️ Den';
-                metaTheme.setAttribute('content', '#1a1816');
-            }
-        }
+    <div class="modal-overlay" id="customModal">
+        <div class="modal-content">
+            <h2>Zapsat výdaj</h2>
+            <input type="text" id="customDesc" placeholder="Za co to bylo?">
+            <input type="date" id="customDate">
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" style="background-color: var(--border-color); color: var(--text-color);" onclick="closeCustomModal()">Zrušit</button>
+                <button class="btn" onclick="saveCustomExpense()">Uložit</button>
+            </div>
+        </div>
+    </div>
 
-        let currentActiveItem = null;
+    <div class="modal-overlay" id="manageModal">
+        <div class="modal-content">
+            <h2>Spravovat denní limit</h2>
+            <input type="number" id="manageInput" inputmode="numeric" style="text-align: center; font-weight: bold; font-size: 1.5rem;">
+            <button class="btn" style="margin-bottom: 10px; background-color: var(--border-color); color: var(--text-color);" onclick="executeManage('rozpocitat')">➗ Rozpočítat do dalších dní</button>
+            <button class="btn" style="margin-bottom: 10px;" onclick="executeManage('usporit')">💰 Odložit do úspor</button>
+            <button class="btn" style="background-color: transparent; color: var(--text-muted); text-decoration: underline;" onclick="closeManageModal()">Zrušit</button>
+        </div>
+    </div>
 
-        function renderApp() {
-            const appContainer = document.getElementById('app');
-            const openDays = Array.from(document.querySelectorAll('.day-section.active')).map(el => el.dataset.day);
-            appContainer.innerHTML = '';
-
-            daysOfWeek.forEach(day => {
-                const dayObj = prayerData[day];
-                const section = document.createElement('div');
-                section.className = `day-section ${openDays.includes(day) ? 'active' : ''}`;
-                section.dataset.day = day;
-                
-                let itemsHtml = dayObj.items.map(item => `
-                    <li class="item">
-                        <div class="item-name" onclick="openModal('${day}', '${item.id}')">
-                            ${item.name} ${item.notes ? '📝' : ''}
-                        </div>
-                        <div class="item-actions">
-                            <button class="icon-btn" onclick="deleteItem('${day}', '${item.id}')">🗑️</button>
-                        </div>
-                    </li>
-                `).join('');
-
-                const isChecked = dayObj.isDone ? 'checked' : '';
-
-                section.innerHTML = `
-                    <div class="day-header" onclick="toggleDay(this)">
-                        <div class="header-left">
-                            <label class="custom-checkbox" onclick="event.stopPropagation()">
-                                <input type="checkbox" onchange="toggleDayDone('${day}', this.checked)" ${isChecked}>
-                                <span class="checkmark"></span>
-                            </label>
-                            <span>${day}</span>
-                        </div>
-                        <span class="toggle-arrow">▼</span>
-                    </div>
-                    <div class="day-content">
-                        <ul class="item-list">
-                            ${itemsHtml}
-                        </ul>
-                        <div class="add-form">
-                            <input type="text" class="add-input" id="input-${day}" placeholder="Přidat jméno...">
-                            <button class="btn" onclick="addItem('${day}')">+</button>
-                        </div>
-                    </div>
-                `;
-                appContainer.appendChild(section);
-            });
-        }
-
-        function toggleDay(headerElement) { headerElement.parentElement.classList.toggle('active'); }
-
-        function toggleDayDone(day, isDone) {
-            prayerData[day].isDone = isDone;
-            saveDataToSheets();
-        }
-
-        function addItem(day) {
-            const input = document.getElementById(`input-${day}`);
-            const name = input.value.trim();
-            if (name) {
-                prayerData[day].items.push({ id: Date.now().toString(), name: name, notes: '' });
-                renderApp();
-                saveDataToSheets();
-            }
-        }
-
-        function deleteItem(day, id) {
-            if (confirm('Opravdu chceš smazat tuto položku?')) {
-                prayerData[day].items = prayerData[day].items.filter(i => i.id !== id);
-                renderApp();
-                saveDataToSheets();
-            }
-        }
-
-        const modal = document.getElementById('noteModal');
-        const modalNotes = document.getElementById('modal-notes');
-
-        function openModal(day, id) {
-            const item = prayerData[day].items.find(i => i.id === id);
-            if (item) {
-                currentActiveItem = { day, id };
-                document.getElementById('modal-title').textContent = item.name;
-                modalNotes.value = item.notes || '';
-                modal.style.display = 'flex';
-            }
-        }
-
-        function closeModal() { modal.style.display = 'none'; currentActiveItem = null; }
-
-        function saveNotes() {
-            if (currentActiveItem) {
-                const { day, id } = currentActiveItem;
-                const itemIndex = prayerData[day].items.findIndex(i => i.id === id);
-                if (itemIndex !== -1) {
-                    prayerData[day].items[itemIndex].notes = modalNotes.value;
-                    renderApp(); 
-                    closeModal();
-                    saveDataToSheets();
-                }
-            }
-        }
-
-        function checkAndResetMonday(data) {
-            const today = new Date();
-            if (today.getDay() === 1) {
-                const dateString = today.toISOString().split('T')[0];
-                const lastReset = localStorage.getItem('prayerAppLastReset');
-                
-                if (lastReset !== dateString) {
-                    let wasChanged = false;
-                    for (let dayKey in data) {
-                        if (data[dayKey].isDone) {
-                            data[dayKey].isDone = false;
-                            wasChanged = true;
-                        }
-                    }
-                    localStorage.setItem('prayerAppLastReset', dateString);
-                    return wasChanged;
-                }
-            }
-            return false;
-        }
-
-        let userPin = localStorage.getItem('prayerAppPin');
-        if (!userPin) {
-            userPin = prompt("Zadej přístupový PIN pro načtení seznamu:");
-            if (userPin) localStorage.setItem('prayerAppPin', userPin);
-        }
-
-        async function loadDataFromSheets() {
-            if(WEB_APP_URL === 'ZDE_VLOZ_URL_APPS_SCRIPTU') {
-                const cached = localStorage.getItem('prayerAppCache');
-                if (cached) {
-                    prayerData = JSON.parse(cached);
-                    if (checkAndResetMonday(prayerData)) saveDataToSheets();
-                }
-                return renderApp();
-            }
-            
-            document.getElementById('loader').style.display = 'block';
-
-            try {
-                const response = await fetch(WEB_APP_URL + '?pin=' + encodeURIComponent(userPin));
-                const data = await response.json();
-                
-                if (data.error) {
-                    localStorage.removeItem('prayerAppPin');
-                    location.reload(); 
-                    return;
-                }
-
-                const cached = localStorage.getItem('prayerAppCache');
-                const localData = cached ? JSON.parse(cached) : null;
-                
-                let serverIsBasicallyEmpty = true;
-                if (data) {
-                    for (let key in data) {
-                        if (data[key] && data[key].items && data[key].items.length > 0) {
-                            serverIsBasicallyEmpty = false;
-                            break;
-                        }
-                    }
-                }
-
-                if (serverIsBasicallyEmpty && localData) {
-                    prayerData = localData;
-                    saveDataToSheets(); 
-                } else if (data && Object.keys(data).length > 0) {
-                    prayerData = data;
-                    if (checkAndResetMonday(prayerData)) {
-                        saveDataToSheets();
-                    } else {
-                        localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
-                    }
-                }
-                renderApp();
-            } catch (error) {
-                const cached = localStorage.getItem('prayerAppCache');
-                if (cached) {
-                    prayerData = JSON.parse(cached);
-                    if (checkAndResetMonday(prayerData)) saveDataToSheets();
-                }
-                renderApp();
-            } finally {
-                document.getElementById('loader').style.display = 'none';
-            }
-        }
-
-        async function saveDataToSheets() {
-            localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
-
-            if(WEB_APP_URL === 'ZDE_VLOZ_URL_APPS_SCRIPTU') return;
-            
-            document.getElementById('loader').style.display = 'block';
-            
-            try {
-                await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ pin: userPin, data: prayerData }),
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-                });
-            } catch (error) {
-            } finally {
-                document.getElementById('loader').style.display = 'none';
-            }
-        }
-
-        function downloadBackup() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(prayerData, null, 2));
-            const downloadNode = document.createElement('a');
-            downloadNode.setAttribute("href", dataStr);
-            downloadNode.setAttribute("download", "modlitby_zaloha.json");
-            document.body.appendChild(downloadNode);
-            downloadNode.click();
-            downloadNode.remove();
-        }
-
-        loadDataFromSheets();
-    </script>
+    <!-- Propojení JS souboru -->
+    <script src="script.js"></script>
 </body>
 </html>
