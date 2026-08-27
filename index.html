@@ -4,146 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
+    <!-- Propojení na externí Manifest a ikony pro Android i Apple -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icon.png" type="image/png">
+    <link rel="apple-touch-icon" href="icon.png">
+    
+    <!-- Nativní obarvení stavové lišty na iPhonu -->
     <meta name="color-scheme" content="light dark">
-    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#e2bb7b" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1a1816" media="(prefers-color-scheme: dark)">
     
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-    <!-- Propojení na externí soubory a ikonku -->
-    <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="icon.png" type="image/png">
-    <link rel="apple-touch-icon" href="icon.png">
-    
-    <title>Rozpočet</title>
+    <title>Modlitební seznam</title>
     
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-    <div class="top-bar">
-        <h2 style="margin:0; font-size: 1.2rem; display: flex; align-items: center; gap: 10px;">
-            Rozpočet
-            <button class="icon-btn" onclick="openSettingsModal()">⚙️</button>
-            <button class="icon-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙</button>
-        </h2>
-        <div class="savings-badge" onclick="openSavingsModal()">
-            Úspory: <span id="totalSavingsDisplay">0</span> Kč
-        </div>
+    <div class="header-container">
+        <h1>Modlitby</h1>
+        <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">🌙 Noc</button>
     </div>
 
-    <div class="hero-card">
-        <div class="hero-label">Dnes můžu utratit</div>
-        <div class="hero-amount" id="dailyLimitDisplay">0 Kč</div>
-        <button class="action-link" onclick="openManageModal()">⚙️ Spravovat zbytek</button>
-        
-        <div class="hero-sub">
-            <div>
-                Zbývá peněz
-                <span id="remainingMonthDisplay">0 Kč</span>
-                <small id="nextDaysDisplay">(0 Kč / den)</small>
-            </div>
-            <div>
-                Dní do konce
-                <span id="daysLeftDisplay">0</span>
-            </div>
-        </div>
-    </div>
+    <!-- Zobrazí se jen při úplně prvním načtení -->
+    <div id="loader" class="loader">Připojování k serveru...</div>
+    
+    <div class="accordion" id="app"></div>
 
-    <div class="input-section">
-        <div class="amount-input-wrapper">
-            <input type="number" id="quickAmount" class="amount-input" placeholder="Zadej útratu (Kč)..." inputmode="numeric">
-        </div>
-        
-        <div class="quick-tags">
-            <button class="tag-btn" onclick="openCustomModal('🛒 Potraviny')"><span style="font-size: 1.5rem;">🛒</span> Potraviny</button>
-            <button class="tag-btn" onclick="openCustomModal('☕ Kafe')"><span style="font-size: 1.5rem;">☕</span> Kafe</button>
-            <button class="tag-btn" onclick="openCustomModal('🚗 Doprava')"><span style="font-size: 1.5rem;">🚗</span> Doprava</button>
-            <button class="tag-btn" onclick="openCustomModal('🍽️ Jídlo venku')"><span style="font-size: 1.5rem;">🍽️</span> Jídlo venku</button>
-            <button class="tag-btn" onclick="openCustomModal('🎉 Zábava')"><span style="font-size: 1.5rem;">🎉</span> Zábava</button>
-            <button class="tag-btn custom" onclick="openCustomModal('')"><span style="font-size: 1.5rem;">📝</span> Jiné...</button>
-        </div>
-    </div>
-
-    <div class="hero-card" style="padding: 15px 20px;">
-        <div class="hero-label" style="margin-bottom: 15px; text-align: left;">Tento měsíc</div>
-        <ul class="expense-list" id="expenseList"></ul>
-    </div>
-
-    <div class="modal-overlay" id="savingsModal">
+    <!-- Modál pro poznámky -->
+    <div class="modal-overlay" id="noteModal">
         <div class="modal-content">
-            <h2>Správa úspor 💰</h2>
-            <p style="color: var(--text-muted); margin-bottom: 20px;">
-                Aktuálně máš naspořeno <strong id="modalCurrentSavings" style="color: var(--primary);">0 Kč</strong>.
-            </p>
-            <input type="number" id="savingsManageInput" inputmode="numeric" placeholder="Zadej částku (Kč)" style="text-align: center; font-weight: bold; font-size: 1.5rem; margin-bottom: 20px;">
-            <button class="btn" style="margin-bottom: 10px;" onclick="addDirectToSavings()">⬇️ Přesunout z rozpočtu do úspor</button>
-            <button class="btn" style="margin-bottom: 20px; background-color: var(--border-color); color: var(--text-color);" onclick="withdrawDirectFromSavings()">⬆️ Vrátit z úspor do rozpočtu</button>
-            <button class="btn" style="background-color: transparent; color: var(--text-muted); text-decoration: underline;" onclick="closeSavingsModal()">Zavřít</button>
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 id="modal-title" style="color: var(--primary); margin-top:0;">Název</h2>
+            <textarea id="modal-notes" rows="6" placeholder="Tvé poznámky..."></textarea>
+            <button class="btn" onclick="saveNotes()" style="width: 100%;">Uložit poznámky</button>
         </div>
     </div>
 
-    <div class="modal-overlay" id="settingsModal">
-        <div class="modal-content">
-            <h2>Nastavení</h2>
-            <h3 style="font-size: 1rem; margin-top: 20px; margin-bottom: 10px;">Změnit rozpočet na tento měsíc</h3>
-            <div style="display: flex; gap: 10px; margin-bottom: 30px;">
-                <input type="number" id="editIncomeInput" inputmode="numeric" style="margin-bottom: 0; flex-grow: 1;">
-                <button class="btn" style="width: auto; padding: 0 20px;" onclick="saveEditedIncome()">Uložit</button>
-            </div>
-            <button class="btn" style="background-color: var(--border-color); color: var(--text-color); margin-bottom: 15px;" onclick="forceRecalculate()">➗ Přepočítat a srovnat limity</button>
-            <button class="btn" style="background-color: var(--danger); color: white; margin-bottom: 25px;" onclick="hardResetApp()">⚠️ Vymazat data a začít znovu</button>
-            <button class="btn" style="background-color: transparent; color: var(--text-muted); text-decoration: underline;" onclick="closeSettingsModal()">Zavřít</button>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="incomeModal">
-        <div class="modal-content">
-            <h2>Nový měsíc! 💸</h2>
-            <p style="color: var(--text-muted); margin-bottom: 20px;">Zadej svůj rozpočet (příjem) na aktuální měsíc. Předchozí zůstatek byl přesunut do úspor.</p>
-            <input type="number" id="incomeInput" placeholder="Zadej částku (Kč)" inputmode="numeric">
-            <button class="btn" onclick="saveIncome()">Uložit a začít měsíc</button>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="dailyActionModal">
-        <div class="modal-content">
-            <h2>Nový den! ☀️</h2>
-            <p style="color: var(--text-muted); margin-bottom: 20px;">
-                Za minulé dny ti v limitu zbylo <strong id="leftoverAmountDisplay" style="color: var(--primary); font-size: 1.2rem;">0 Kč</strong>.<br>
-                Co chceš s těmito penězi udělat?
-            </p>
-            <button class="btn" style="margin-bottom: 10px;" onclick="handleLeftover('dnesek')">⬇️ Přidat k dnešnímu dni</button>
-            <button class="btn" style="margin-bottom: 10px; background-color: var(--border-color); color: var(--text-color);" onclick="handleLeftover('rozpocitat')">➗ Rozpočítat do dalších dní</button>
-            <button class="btn" style="background-color: transparent; color: var(--text-color); border: 1px solid var(--border-color);" onclick="handleLeftover('usporit')">💰 Uspořit</button>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="customModal">
-        <div class="modal-content">
-            <h2>Zapsat výdaj</h2>
-            <input type="text" id="customDesc" placeholder="Za co to bylo?">
-            <input type="date" id="customDate">
-            <div style="display: flex; gap: 10px;">
-                <button class="btn" style="background-color: var(--border-color); color: var(--text-color);" onclick="closeCustomModal()">Zrušit</button>
-                <button class="btn" onclick="saveCustomExpense()">Uložit</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="manageModal">
-        <div class="modal-content">
-            <h2>Spravovat denní limit</h2>
-            <input type="number" id="manageInput" inputmode="numeric" style="text-align: center; font-weight: bold; font-size: 1.5rem;">
-            <button class="btn" style="margin-bottom: 10px; background-color: var(--border-color); color: var(--text-color);" onclick="executeManage('rozpocitat')">➗ Rozpočítat do dalších dní</button>
-            <button class="btn" style="margin-bottom: 10px;" onclick="executeManage('usporit')">💰 Odložit do úspor</button>
-            <button class="btn" style="background-color: transparent; color: var(--text-muted); text-decoration: underline;" onclick="closeManageModal()">Zrušit</button>
-        </div>
-    </div>
-
-    <!-- Propojení JS souboru -->
     <script src="script.js"></script>
 </body>
 </html>
