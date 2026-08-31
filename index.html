@@ -4,12 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <!-- Propojení na externí Manifest a ikony pro Android i Apple -->
     <link rel="manifest" href="manifest.json?v=2">
     <link rel="icon" href="icon.png" type="image/png">
     <link rel="apple-touch-icon" href="icon.png">
     
-    <!-- Nativní obarvení stavové lišty na iPhonu -->
     <meta name="color-scheme" content="light dark">
     <meta name="theme-color" content="#e2bb7b" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#1a1816" media="(prefers-color-scheme: dark)">
@@ -28,18 +26,22 @@
         <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">🌙 Noc</button>
     </div>
 
-    <!-- Zobrazí se jen při úplně prvním načtení -->
     <div id="loader" class="loader">Připojování k serveru...</div>
     
     <div class="accordion" id="app"></div>
 
-    <!-- Modál pro poznámky -->
     <div class="modal-overlay" id="noteModal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
             <h2 id="modal-title" style="color: var(--primary); margin-top:0;">Název</h2>
             <textarea id="modal-notes" rows="6" placeholder="Tvé poznámky..."></textarea>
-            <button class="btn" onclick="saveNotes()" style="width: 100%;">Uložit poznámky</button>
+            
+            <button class="btn" onclick="saveNotes()" style="width: 100%; margin-bottom: 25px;">Uložit poznámky</button>
+            
+            <!-- NOVÝ VZHLED TLAČÍTKA PRO SMAZÁNÍ -->
+            <div style="text-align: center; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                <button class="delete-link-btn" onclick="deleteCurrentItem()">🗑️ Smazat položku</button>
+            </div>
         </div>
     </div>
 

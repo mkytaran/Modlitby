@@ -66,10 +66,49 @@ h1 { color: var(--primary); margin: 0; font-size: 1.5rem; }
 .custom-checkbox input:checked ~ .checkmark::after { content: '🙏'; font-size: 20px; }
 
 .item-list { list-style-type: none; padding: 0; margin: 0 0 15px 0; }
-.item { background-color: var(--item-bg); margin-bottom: 10px; padding: 15px; border-radius: var(--border-radius); display: flex; justify-content: space-between; align-items: center; }
+.item { background-color: var(--item-bg); margin-bottom: 10px; padding: 15px; border-radius: var(--border-radius); display: flex; align-items: center; gap: 15px; }
+
 .item-name { flex-grow: 1; font-size: 1.1rem; cursor: pointer; }
-.item-actions { display: flex; gap: 10px; }
-.icon-btn { background: none; border: none; font-size: 1.2rem; padding: 5px; color: var(--text-color); cursor: pointer; }
+.done-text { opacity: 0.5; }
+
+/* KULATÉ ZAŠKRTÁVÁTKO DOPRAVA */
+.item-checkbox { 
+    appearance: none;
+    -webkit-appearance: none;
+    width: 26px; 
+    height: 26px; 
+    border: 2px solid var(--border-color);
+    border-radius: 50%; /* Dělá prvek kulatý */
+    cursor: pointer; 
+    position: relative;
+    flex-shrink: 0;
+    margin: 0;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+[data-theme="dark"] .item-checkbox { border-color: var(--primary); }
+
+.item-checkbox:checked {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+
+.item-checkbox:checked::after {
+    content: '✔';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ffffc7;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+[data-theme="dark"] .item-checkbox:checked::after {
+    color: #1a1816;
+}
+
 .add-form { display: flex; gap: 10px; }
 .add-input { flex-grow: 1; padding: 12px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--input-bg); color: var(--text-color); font-size: 1rem; }
 .btn { background-color: var(--primary); color: #ffffc7; border: none; padding: 12px 20px; border-radius: var(--border-radius); font-size: 1rem; font-weight: bold; cursor: pointer; }
@@ -79,3 +118,23 @@ h1 { color: var(--primary); margin: 0; font-size: 1.5rem; }
 .modal-content { background-color: var(--card-bg); padding: 25px; border-radius: var(--border-radius); width: 100%; max-width: 400px; position: relative; }
 .close-btn { position: absolute; top: 15px; right: 15px; font-size: 1.8rem; color: var(--text-color); cursor: pointer; }
 textarea { width: 100%; padding: 15px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--input-bg); color: var(--text-color); margin-bottom: 15px; resize: vertical; box-sizing: border-box; font-family: inherit; font-size: 1rem; }
+
+/* ... tvůj existující CSS kód ... */
+textarea { width: 100%; padding: 15px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--input-bg); color: var(--text-color); margin-bottom: 15px; resize: vertical; box-sizing: border-box; font-family: inherit; font-size: 1rem; }
+
+/* STYL PRO BEZPEČNÉ TLAČÍTKO SMAZAT */
+.delete-link-btn {
+    background: none;
+    border: none;
+    color: #ef4444; /* Červená barva textu */
+    font-size: 0.95rem;
+    cursor: pointer;
+    text-decoration: underline;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+    padding: 10px;
+}
+
+.delete-link-btn:active {
+    opacity: 1;
+}

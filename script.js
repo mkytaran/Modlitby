@@ -4,7 +4,6 @@ const daysOfWeek = ['Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'So
 let prayerData = {};
 daysOfWeek.forEach(day => { prayerData[day] = { isDone: false, items: [] }; });
 
-// THEME HANDLING
 const themeBtn = document.getElementById('themeToggle');
 if (localStorage.getItem('prayerTheme') === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
@@ -26,7 +25,6 @@ function toggleTheme() {
 
 let currentActiveItem = null;
 
-// RENDER APP
 function renderApp() {
     const appContainer = document.getElementById('app');
     const openDays = Array.from(document.querySelectorAll('.day-section.active')).map(el => el.dataset.day);
@@ -38,14 +36,13 @@ function renderApp() {
         section.className = `day-section ${openDays.includes(day) ? 'active' : ''}`;
         section.dataset.day = day;
 
+        // TADY SE PROHODILO POŘADÍ - Jméno první, checkbox napravo
         let itemsHtml = dayObj.items.map(item => `
             <li class="item">
-                <div class="item-name" onclick="openModal('${day}', '${item.id}')">
+                <div class="item-name ${item.isDone ? 'done-text' : ''}" onclick="openModal('${day}', '${item.id}')">
                     ${item.name} ${item.notes ? '📝' : ''}
                 </div>
-                <div class="item-actions">
-                    <button class="icon-btn" onclick="deleteItem('${day}', '${item.id}')">🗑️</button>
-                </div>
+                <input type="checkbox" class="item-checkbox" onchange="toggleItemDone('${day}', '${item.id}', this.checked)" ${item.isDone ? 'checked' : ''}>
             </li>
         `).join('');
 
@@ -83,25 +80,43 @@ function toggleDayDone(day, isDone) {
     saveDataToSheets();
 }
 
+function toggleItemDone(day, id, isDone) {
+    const item = prayerData[day].items.find(i => i.id === id);
+    if (item) {
+        item.isDone = isDone;
+        renderApp();
+        saveDataToSheets();
+    }
+}
+
 function addItem(day) {
     const input = document.getElementById(`input-${day}`);
     const name = input.value.trim();
     if (name) {
-        prayerData[day].items.push({ id: Date.now().toString(), name: name, notes: '' });
+        prayerData[day].items.push({ id: Date.now().toString(), name: name, notes: '', isDone: false });
         renderApp();
         saveDataToSheets();
     }
 }
 
-function deleteItem(day, id) {
-    if (confirm('Opravdu chceš smazat tuto položku?')) {
-        prayerData[day].items = prayerData[day].items.filter(i => i.id !== id);
-        renderApp();
-        saveDataToSheets();
+function deleteCurrentItem() {
+    if (currentActiveItem) {
+        const { day, id } = currentActiveItem;
+        const itemToDelete = prayerData[day].items.find(i => i.id === id);
+        
+        if (itemToDelete) {
+            // Osobní pojistka se jménem
+            if (confirm(`Opravdu chceš smazat položku "${itemToDelete.name}"?\n(Tato akce nepůjde vrátit.)`)) {
+                prayerData[day].items = prayerData[day].items.filter(i => i.id !== id);
+                renderApp();
+                closeModal();
+                saveDataToSheets();
+            }
+        }
     }
 }
 
-// MODAL LOGIC
+
 const modal = document.getElementById('noteModal');
 const modalNotes = document.getElementById('modal-notes');
 
@@ -130,7 +145,6 @@ function saveNotes() {
     }
 }
 
-// MONDAY RESET
 function checkAndResetMonday(data) {
     const today = new Date();
     if (today.getDay() === 1) {
@@ -144,6 +158,14 @@ function checkAndResetMonday(data) {
                     data[dayKey].isDone = false;
                     wasChanged = true;
                 }
+                if (data[dayKey].items) {
+                    data[dayKey].items.forEach(item => {
+                        if (item.isDone) {
+                            item.isDone = false;
+                            wasChanged = true;
+                        }
+                    });
+                }
             }
             localStorage.setItem('prayerAppLastReset', dateString);
             return wasChanged;
@@ -152,7 +174,6 @@ function checkAndResetMonday(data) {
     return false;
 }
 
-// DATA LOADING & SAVING (Bleskové načítání)
 let userPin = localStorage.getItem('prayerAppPin');
 if (!userPin) {
     userPin = prompt("Zadej přístupový PIN pro načtení seznamu:");
@@ -160,7 +181,6 @@ if (!userPin) {
 }
 
 function loadDataFromSheets() {
-    // 1. Okamžité vykreslení z Cache (0ms)
     const cached = localStorage.getItem('prayerAppCache');
     if (cached) {
         prayerData = JSON.parse(cached);
@@ -169,10 +189,9 @@ function loadDataFromSheets() {
         }
         renderApp();
     } else {
-        document.getElementById('loader').style.display = 'block'; // Ukáže "Připojování..." jen při úplně prvním načtení
+        document.getElementById('loader').style.display = 'block'; 
     }
 
-    // 2. Skryté načtení novinek z Googlu na pozadí
     fetch(WEB_APP_URL + '?pin=' + encodeURIComponent(userPin))
         .then(response => response.json())
         .then(data => {
@@ -183,12 +202,11 @@ function loadDataFromSheets() {
                 return;
             }
             
-            // 3. Kontrola změn a neviditelné překreslení, pokud do toho na jiném zařízení někdo sáhnul
             const freshString = JSON.stringify(data);
             if (data && Object.keys(data).length > 0 && cached !== freshString) {
                 prayerData = data;
                 if (checkAndResetMonday(prayerData)) {
-                    saveDataToSheets(); // Aktualizuje Google po pondělním resetu
+                    saveDataToSheets();
                 } else {
                     localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
                 }
@@ -203,10 +221,8 @@ function loadDataFromSheets() {
 }
 
 function saveDataToSheets() {
-    // Okamžitý lokální update na obrazovce a do paměti telefonu
     localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
     
-    // Zbrklé odeslání do Googlu (Tiše na pozadí, uživatele to neblokuje v další práci)
     fetch(WEB_APP_URL, {
         method: 'POST',
         body: JSON.stringify({ pin: userPin, data: prayerData }),
@@ -216,5 +232,4 @@ function saveDataToSheets() {
     });
 }
 
-// Spuštění
 loadDataFromSheets();
