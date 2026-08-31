@@ -3,8 +3,8 @@
   "short_name": "Modlitby",
   "display": "standalone",
   "start_url": "./index.html",
-  "background_color": "#f8fafc",
-  "theme_color": "#10b981",
+  "background_color": "#1a1816",
+  "theme_color": "#e2bb7b",
   "icons": [
     {
       "src": "icon.png",
