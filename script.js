@@ -36,7 +36,17 @@ function renderApp() {
         section.className = `day-section ${openDays.includes(day) ? 'active' : ''}`;
         section.dataset.day = day;
 
-        // TADY SE PROHODILO POŘADÍ - Jméno první, checkbox napravo
+        // VÝPOČET PROGRESU PRO KROUŽEK
+        let totalItems = dayObj.items.length;
+        let doneItems = dayObj.items.filter(i => i.isDone).length;
+        let progress = 0;
+        
+        if (totalItems > 0) {
+            progress = (doneItems / totalItems) * 100;
+            // Automaticky označí celý den jako splněný, pokud jsou všechny položky hotové
+            dayObj.isDone = (doneItems === totalItems);
+        }
+
         let itemsHtml = dayObj.items.map(item => `
             <li class="item">
                 <div class="item-name ${item.isDone ? 'done-text' : ''}" onclick="openModal('${day}', '${item.id}')">
@@ -48,12 +58,13 @@ function renderApp() {
 
         const isChecked = dayObj.isDone ? 'checked' : '';
 
+        // Do HTML kroužku přidáváme dynamický styl --progress
         section.innerHTML = `
             <div class="day-header" onclick="toggleDay(this)">
                 <div class="header-left">
                     <label class="custom-checkbox" onclick="event.stopPropagation()">
                         <input type="checkbox" onchange="toggleDayDone('${day}', this.checked)" ${isChecked}>
-                        <span class="checkmark"></span>
+                        <span class="checkmark" style="--progress: ${progress}%"></span>
                     </label>
                     <span>${day}</span>
                 </div>
@@ -75,19 +86,27 @@ function renderApp() {
 
 function toggleDay(headerElement) { headerElement.parentElement.classList.toggle('active'); }
 
+// Pokud uživatel zaškrtne velký kroužek dne (označí se všechny položky najednou)
 function toggleDayDone(day, isDone) {
     prayerData[day].isDone = isDone;
+    prayerData[day].items.forEach(item => {
+        item.isDone = isDone;
+    });
+    renderApp();
     saveDataToSheets();
 }
 
+// Pokud uživatel zaškrtává po jedné položce
 function toggleItemDone(day, id, isDone) {
     const item = prayerData[day].items.find(i => i.id === id);
     if (item) {
         item.isDone = isDone;
+        // O kontrolu celkového dne se teď postará automatický výpočet nahoře v renderApp()
         renderApp();
         saveDataToSheets();
     }
 }
+
 
 function addItem(day) {
     const input = document.getElementById(`input-${day}`);
