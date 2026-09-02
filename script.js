@@ -4,6 +4,7 @@ const daysOfWeek = ['Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'So
 let prayerData = {};
 daysOfWeek.forEach(day => { prayerData[day] = { isDone: false, items: [] }; });
 
+// THEME HANDLING
 const themeBtn = document.getElementById('themeToggle');
 if (localStorage.getItem('prayerTheme') === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
@@ -32,22 +33,24 @@ function renderApp() {
 
     daysOfWeek.forEach(day => {
         const dayObj = prayerData[day];
+        if (!dayObj) return; // Bezpečnostní pojistka
+        
         const section = document.createElement('div');
         section.className = `day-section ${openDays.includes(day) ? 'active' : ''}`;
         section.dataset.day = day;
 
         // VÝPOČET PROGRESU PRO KROUŽEK
-        let totalItems = dayObj.items.length;
-        let doneItems = dayObj.items.filter(i => i.isDone).length;
+        let itemsArray = dayObj.items || [];
+        let totalItems = itemsArray.length;
+        let doneItems = itemsArray.filter(i => i.isDone).length;
         let progress = 0;
         
         if (totalItems > 0) {
             progress = (doneItems / totalItems) * 100;
-            // Automaticky označí celý den jako splněný, pokud jsou všechny položky hotové
             dayObj.isDone = (doneItems === totalItems);
         }
 
-        let itemsHtml = dayObj.items.map(item => `
+        let itemsHtml = itemsArray.map(item => `
             <li class="item">
                 <div class="item-name ${item.isDone ? 'done-text' : ''}" onclick="openModal('${day}', '${item.id}')">
                     ${item.name} ${item.notes ? '📝' : ''}
@@ -58,7 +61,6 @@ function renderApp() {
 
         const isChecked = dayObj.isDone ? 'checked' : '';
 
-        // Do HTML kroužku přidáváme dynamický styl --progress
         section.innerHTML = `
             <div class="day-header" onclick="toggleDay(this)">
                 <div class="header-left">
@@ -86,32 +88,29 @@ function renderApp() {
 
 function toggleDay(headerElement) { headerElement.parentElement.classList.toggle('active'); }
 
-// Pokud uživatel zaškrtne velký kroužek dne (označí se všechny položky najednou)
 function toggleDayDone(day, isDone) {
     prayerData[day].isDone = isDone;
-    prayerData[day].items.forEach(item => {
-        item.isDone = isDone;
-    });
+    if (prayerData[day].items) {
+        prayerData[day].items.forEach(item => { item.isDone = isDone; });
+    }
     renderApp();
     saveDataToSheets();
 }
 
-// Pokud uživatel zaškrtává po jedné položce
 function toggleItemDone(day, id, isDone) {
     const item = prayerData[day].items.find(i => i.id === id);
     if (item) {
         item.isDone = isDone;
-        // O kontrolu celkového dne se teď postará automatický výpočet nahoře v renderApp()
         renderApp();
         saveDataToSheets();
     }
 }
 
-
 function addItem(day) {
     const input = document.getElementById(`input-${day}`);
     const name = input.value.trim();
     if (name) {
+        if (!prayerData[day].items) prayerData[day].items = [];
         prayerData[day].items.push({ id: Date.now().toString(), name: name, notes: '', isDone: false });
         renderApp();
         saveDataToSheets();
@@ -122,19 +121,14 @@ function deleteCurrentItem() {
     if (currentActiveItem) {
         const { day, id } = currentActiveItem;
         const itemToDelete = prayerData[day].items.find(i => i.id === id);
-        
-        if (itemToDelete) {
-            // Osobní pojistka se jménem
-            if (confirm(`Opravdu chceš smazat položku "${itemToDelete.name}"?\n(Tato akce nepůjde vrátit.)`)) {
-                prayerData[day].items = prayerData[day].items.filter(i => i.id !== id);
-                renderApp();
-                closeModal();
-                saveDataToSheets();
-            }
+        if (itemToDelete && confirm(`Opravdu chceš smazat položku "${itemToDelete.name}"?\n(Tato akce nepůjde vrátit.)`)) {
+            prayerData[day].items = prayerData[day].items.filter(i => i.id !== id);
+            renderApp();
+            closeModal();
+            saveDataToSheets();
         }
     }
 }
-
 
 const modal = document.getElementById('noteModal');
 const modalNotes = document.getElementById('modal-notes');
@@ -166,23 +160,17 @@ function saveNotes() {
 
 function checkAndResetMonday(data) {
     const today = new Date();
-    if (today.getDay() === 1) {
+    if (today.getDay() === 1) { // 1 = Pondělí
         const dateString = today.toISOString().split('T')[0];
         const lastReset = localStorage.getItem('prayerAppLastReset');
 
         if (lastReset !== dateString) {
             let wasChanged = false;
             for (let dayKey in data) {
-                if (data[dayKey].isDone) {
-                    data[dayKey].isDone = false;
-                    wasChanged = true;
-                }
+                if (data[dayKey].isDone) { data[dayKey].isDone = false; wasChanged = true; }
                 if (data[dayKey].items) {
                     data[dayKey].items.forEach(item => {
-                        if (item.isDone) {
-                            item.isDone = false;
-                            wasChanged = true;
-                        }
+                        if (item.isDone) { item.isDone = false; wasChanged = true; }
                     });
                 }
             }
@@ -192,6 +180,10 @@ function checkAndResetMonday(data) {
     }
     return false;
 }
+
+// ----------------------------------------------------
+// LOGIKA BLESKOVÉHO NAČÍTÁNÍ SE SYNCHRONIZACÍ RAZÍTEK
+// ----------------------------------------------------
 
 let userPin = localStorage.getItem('prayerAppPin');
 if (!userPin) {
@@ -204,6 +196,8 @@ function loadDataFromSheets() {
     if (cached) {
         prayerData = JSON.parse(cached);
         if (checkAndResetMonday(prayerData)) {
+            // Pokud došlo k resetu v pondělí, orazítkujeme data jako "nejnovější"
+            prayerData._lastUpdate = Date.now();
             localStorage.setItem('prayerAppCache', JSON.stringify(prayerData)); 
         }
         renderApp();
@@ -223,13 +217,26 @@ function loadDataFromSheets() {
             
             const freshString = JSON.stringify(data);
             if (data && Object.keys(data).length > 0 && cached !== freshString) {
-                prayerData = data;
-                if (checkAndResetMonday(prayerData)) {
-                    saveDataToSheets();
+                
+                // POROVNÁNÍ ČASOVÝCH RAZÍTEK
+                const serverTime = data._lastUpdate || 0;
+                const localTime = prayerData._lastUpdate || 0;
+
+                if (localTime > serverTime) {
+                    // Data v telefonu jsou novější (Google je minule nestihl uložit, protože jsi to rychle zavřel).
+                    // NEBUDEME je přepisovat. Naopak pošleme ta správná zpět na Google.
+                    console.log("Lokální data v telefonu jsou novější, opravuji server...");
+                    saveDataToSheets(); 
                 } else {
-                    localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
+                    // Google má novější data (někdo to změnil z jiného zařízení apod.)
+                    prayerData = data;
+                    if (checkAndResetMonday(prayerData)) {
+                        saveDataToSheets();
+                    } else {
+                        localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
+                    }
+                    renderApp();
                 }
-                renderApp();
             }
             document.getElementById('loader').style.display = 'none';
         })
@@ -240,14 +247,17 @@ function loadDataFromSheets() {
 }
 
 function saveDataToSheets() {
+    // Vytvoříme přesné časové razítko uložení
+    prayerData._lastUpdate = Date.now();
     localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
     
+    // Tiché odeslání do Googlu
     fetch(WEB_APP_URL, {
         method: 'POST',
         body: JSON.stringify({ pin: userPin, data: prayerData }),
         headers: { 'Content-Type': 'text/plain;charset=utf-8' }
     }).catch(error => {
-        console.error("Nepodařilo se odeslat do Googlu. Data jsou aspoň uložena lokálně.", error);
+        console.error("Nepodařilo se odeslat do Googlu.", error);
     });
 }
 
