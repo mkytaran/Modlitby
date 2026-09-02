@@ -26,6 +26,7 @@ function toggleTheme() {
 
 let currentActiveItem = null;
 
+// RENDER APP (s kroužkem pro postupné označování)
 function renderApp() {
     const appContainer = document.getElementById('app');
     const openDays = Array.from(document.querySelectorAll('.day-section.active')).map(el => el.dataset.day);
@@ -33,21 +34,23 @@ function renderApp() {
 
     daysOfWeek.forEach(day => {
         const dayObj = prayerData[day];
-        if (!dayObj) return; // Bezpečnostní pojistka
+        if (!dayObj) return;
         
         const section = document.createElement('div');
         section.className = `day-section ${openDays.includes(day) ? 'active' : ''}`;
         section.dataset.day = day;
 
-        // VÝPOČET PROGRESU PRO KROUŽEK
         let itemsArray = dayObj.items || [];
         let totalItems = itemsArray.length;
         let doneItems = itemsArray.filter(i => i.isDone).length;
         let progress = 0;
         
+        // Správný výpočet pro graf i pro dny bez položek
         if (totalItems > 0) {
             progress = (doneItems / totalItems) * 100;
             dayObj.isDone = (doneItems === totalItems);
+        } else if (dayObj.isDone) {
+            progress = 100;
         }
 
         let itemsHtml = itemsArray.map(item => `
@@ -121,7 +124,7 @@ function deleteCurrentItem() {
     if (currentActiveItem) {
         const { day, id } = currentActiveItem;
         const itemToDelete = prayerData[day].items.find(i => i.id === id);
-        if (itemToDelete && confirm(`Opravdu chceš smazat položku "${itemToDelete.name}"?\n(Tato akce nepůjde vrátit.)`)) {
+        if (itemToDelete && confirm(`Opravdu chceš smazat položku "${itemToDelete.name}"?`)) {
             prayerData[day].items = prayerData[day].items.filter(i => i.id !== id);
             renderApp();
             closeModal();
@@ -167,8 +170,10 @@ function checkAndResetMonday(data) {
         if (lastReset !== dateString) {
             let wasChanged = false;
             for (let dayKey in data) {
-                if (data[dayKey].isDone) { data[dayKey].isDone = false; wasChanged = true; }
-                if (data[dayKey].items) {
+                if (dayKey === '_lastUpdate') continue; // Ignoruje případný balast
+                
+                if (data[dayKey] && data[dayKey].isDone) { data[dayKey].isDone = false; wasChanged = true; }
+                if (data[dayKey] && data[dayKey].items) {
                     data[dayKey].items.forEach(item => {
                         if (item.isDone) { item.isDone = false; wasChanged = true; }
                     });
@@ -182,7 +187,7 @@ function checkAndResetMonday(data) {
 }
 
 // ----------------------------------------------------
-// LOGIKA BLESKOVÉHO NAČÍTÁNÍ SE SYNCHRONIZACÍ RAZÍTEK
+// BLESKOVÉ NAČÍTÁNÍ A BEZPEČNÉ ODESÍLÁNÍ NA POZADÍ
 // ----------------------------------------------------
 
 let userPin = localStorage.getItem('prayerAppPin');
@@ -193,16 +198,31 @@ if (!userPin) {
 
 function loadDataFromSheets() {
     const cached = localStorage.getItem('prayerAppCache');
+    const pendingSync = localStorage.getItem('prayerPendingSync');
+
     if (cached) {
         prayerData = JSON.parse(cached);
+        
+        // ZÁSADNÍ OPRAVA: Odstranění chybného razítka, které rozbíjelo Google Script
+        if (prayerData._lastUpdate !== undefined) {
+            delete prayerData._lastUpdate;
+            localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
+        }
+
         if (checkAndResetMonday(prayerData)) {
-            // Pokud došlo k resetu v pondělí, orazítkujeme data jako "nejnovější"
-            prayerData._lastUpdate = Date.now();
-            localStorage.setItem('prayerAppCache', JSON.stringify(prayerData)); 
+            localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
+            localStorage.setItem('prayerPendingSync', 'true');
         }
         renderApp();
     } else {
-        document.getElementById('loader').style.display = 'block'; 
+        document.getElementById('loader').style.display = 'block';
+    }
+
+    // Pokud je vztyčená vlajka, že se minule nestihlo uložit, pošleme to tam hned
+    if (pendingSync === 'true') {
+        saveDataToSheets();
+        document.getElementById('loader').style.display = 'none';
+        return; 
     }
 
     fetch(WEB_APP_URL + '?pin=' + encodeURIComponent(userPin))
@@ -216,27 +236,16 @@ function loadDataFromSheets() {
             }
             
             const freshString = JSON.stringify(data);
-            if (data && Object.keys(data).length > 0 && cached !== freshString) {
-                
-                // POROVNÁNÍ ČASOVÝCH RAZÍTEK
-                const serverTime = data._lastUpdate || 0;
-                const localTime = prayerData._lastUpdate || 0;
-
-                if (localTime > serverTime) {
-                    // Data v telefonu jsou novější (Google je minule nestihl uložit, protože jsi to rychle zavřel).
-                    // NEBUDEME je přepisovat. Naopak pošleme ta správná zpět na Google.
-                    console.log("Lokální data v telefonu jsou novější, opravuji server...");
-                    saveDataToSheets(); 
+            
+            // Ochrana před přepsáním čerstvě naklikaných dat
+            if (data && Object.keys(data).length > 0 && cached !== freshString && !localStorage.getItem('prayerPendingSync')) {
+                prayerData = data;
+                if (checkAndResetMonday(prayerData)) {
+                    saveDataToSheets();
                 } else {
-                    // Google má novější data (někdo to změnil z jiného zařízení apod.)
-                    prayerData = data;
-                    if (checkAndResetMonday(prayerData)) {
-                        saveDataToSheets();
-                    } else {
-                        localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
-                    }
-                    renderApp();
+                    localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
                 }
+                renderApp();
             }
             document.getElementById('loader').style.display = 'none';
         })
@@ -247,17 +256,23 @@ function loadDataFromSheets() {
 }
 
 function saveDataToSheets() {
-    // Vytvoříme přesné časové razítko uložení
-    prayerData._lastUpdate = Date.now();
     localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
+    localStorage.setItem('prayerPendingSync', 'true'); // Vztyčení ochranné vlajky
     
-    // Tiché odeslání do Googlu
+    // Tiché a velmi agresivní odeslání do Googlu (nezruší se ani při zavření okna)
     fetch(WEB_APP_URL, {
         method: 'POST',
         body: JSON.stringify({ pin: userPin, data: prayerData }),
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' }
-    }).catch(error => {
-        console.error("Nepodařilo se odeslat do Googlu.", error);
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        keepalive: true
+    })
+    .then(res => {
+        if (res.ok) {
+            localStorage.removeItem('prayerPendingSync'); // Data jsou u Googlu, vlajka dolů
+        }
+    })
+    .catch(error => {
+        console.error("Zápis selhal. Pokusí se znovu při dalším spuštění.", error);
     });
 }
 
