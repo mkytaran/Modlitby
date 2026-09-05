@@ -4,6 +4,7 @@ const daysOfWeek = ['Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'So
 let prayerData = {};
 daysOfWeek.forEach(day => { prayerData[day] = { isDone: false, items: [] }; });
 
+// TÉMA (Den / Noc)
 const themeBtn = document.getElementById('themeToggle');
 if (localStorage.getItem('prayerTheme') === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
@@ -86,6 +87,7 @@ function renderApp() {
         appContainer.appendChild(section);
     });
 
+    // DRAG & DROP
     document.querySelectorAll('.item-list').forEach(ulElement => {
         if (typeof Sortable !== 'undefined') {
             new Sortable(ulElement, {
@@ -249,6 +251,27 @@ function checkAndResetMonday(data) {
     return false;
 }
 
+// ------------------------------------------------------------------
+// PŘEKLADAČ DAT (Řeší problém s "Ano" / "Ne" z Google Tabulky)
+// ------------------------------------------------------------------
+function normalizeData(data) {
+    if (!data) return data;
+    for (let day in data) {
+        if (data[day]) {
+            // Převod pro samotný den
+            data[day].isDone = (data[day].isDone === true || data[day].isDone === 'Ano' || data[day].isDone === 'ano');
+            
+            // Převod pro jednotlivé lidi/předměty uvnitř dne
+            if (data[day].items) {
+                data[day].items.forEach(item => {
+                    item.isDone = (item.isDone === true || item.isDone === 'Ano' || item.isDone === 'ano');
+                });
+            }
+        }
+    }
+    return data;
+}
+
 let userPin = localStorage.getItem('prayerAppPin');
 if (!userPin) {
     userPin = prompt("Zadej přístupový PIN pro načtení seznamu:");
@@ -256,10 +279,10 @@ if (!userPin) {
 }
 
 function loadDataFromSheets() {
-    // 1. Okamžité načtení z Cache
+    // 1. Okamžité načtení z paměti telefonu (a překlad dat pro jistotu)
     const cached = localStorage.getItem('prayerAppCache');
     if (cached) {
-        prayerData = JSON.parse(cached);
+        prayerData = normalizeData(JSON.parse(cached));
         if (checkAndResetMonday(prayerData)) {
             localStorage.setItem('prayerAppCache', JSON.stringify(prayerData)); 
         }
@@ -268,7 +291,7 @@ function loadDataFromSheets() {
         document.getElementById('loader').style.display = 'block';
     }
 
-    // 2. Skryté načtení novinek z Googlu
+    // 2. Skryté načtení z Googlu
     fetch(WEB_APP_URL + '?pin=' + encodeURIComponent(userPin))
         .then(response => response.json())
         .then(data => {
@@ -279,10 +302,13 @@ function loadDataFromSheets() {
                 return;
             }
             
-            // 3. Překreslení JEN A POUZE v případě, že se data na Googlu od těch lokálních skutečně liší.
-            // Pokud jsou stejná, telefon zbytečně nepřekresluje a tím nesmaže tvůj čerstvý pokrok.
+            // TADY SE DATA Z GOOGLU ("Ano"/"Ne") PŘELOŽÍ NA ZAŠKRTNUTO/NEZAŠKRTNUTO
+            data = normalizeData(data);
+            
             const freshString = JSON.stringify(data);
-            if (data && Object.keys(data).length > 0 && cached !== freshString) {
+            
+            // Teď už porovnání s pamětí telefonu funguje dokonale
+            if (data && Object.keys(data).length > 0 && JSON.stringify(prayerData) !== freshString) {
                 prayerData = data;
                 if (checkAndResetMonday(prayerData)) {
                     saveDataToSheets();
