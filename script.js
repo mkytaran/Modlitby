@@ -4,7 +4,6 @@ const daysOfWeek = ['Pondělí', 'Úterý', 'Středa', 'Čtvrtek', 'Pátek', 'So
 let prayerData = {};
 daysOfWeek.forEach(day => { prayerData[day] = { isDone: false, items: [] }; });
 
-// TÉMA (Den / Noc)
 const themeBtn = document.getElementById('themeToggle');
 if (localStorage.getItem('prayerTheme') === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
@@ -26,7 +25,6 @@ function toggleTheme() {
 
 let currentActiveItem = null;
 
-// VYKRESLENÍ APLIKACE
 function renderApp() {
     const appContainer = document.getElementById('app');
     const openDays = Array.from(document.querySelectorAll('.day-section.active')).map(el => el.dataset.day);
@@ -53,7 +51,8 @@ function renderApp() {
         }
 
         let itemsHtml = itemsArray.map(item => `
-            <li class="item">
+            <li class="item" data-id="${item.id}">
+                <div class="drag-handle">☰</div>
                 <div class="item-name ${item.isDone ? 'done-text' : ''}" onclick="openModal('${day}', '${item.id}')">
                     ${item.name} ${item.notes ? '📝' : ''}
                 </div>
@@ -75,7 +74,7 @@ function renderApp() {
                 <span class="toggle-arrow">▼</span>
             </div>
             <div class="day-content">
-                <ul class="item-list">
+                <ul class="item-list" data-day="${day}">
                     ${itemsHtml}
                 </ul>
                 <div class="add-form">
@@ -85,6 +84,32 @@ function renderApp() {
             </div>
         `;
         appContainer.appendChild(section);
+    });
+
+    // AKTIVACE DRAG & DROP
+    document.querySelectorAll('.item-list').forEach(ulElement => {
+        if (typeof Sortable !== 'undefined') {
+            new Sortable(ulElement, {
+                group: 'prayers', 
+                handle: '.drag-handle', 
+                animation: 150, 
+                onEnd: function (evt) {
+                    const fromDay = evt.from.dataset.day;
+                    const toDay = evt.to.dataset.day;
+                    const oldIndex = evt.oldIndex;
+                    const newIndex = evt.newIndex;
+
+                    if (fromDay === toDay && oldIndex === newIndex) return;
+
+                    const movedItem = prayerData[fromDay].items.splice(oldIndex, 1)[0];
+                    if (!prayerData[toDay].items) prayerData[toDay].items = [];
+                    prayerData[toDay].items.splice(newIndex, 0, movedItem);
+
+                    saveDataToSheets();
+                    renderApp();
+                }
+            });
+        }
     });
 }
 
@@ -132,7 +157,6 @@ function deleteCurrentItem() {
     }
 }
 
-// MODÁLNÍ OKNO A PŘESUN
 const modal = document.getElementById('noteModal');
 const modalNotes = document.getElementById('modal-notes');
 
@@ -143,7 +167,6 @@ function openModal(day, id) {
         document.getElementById('modal-title').textContent = item.name;
         modalNotes.value = item.notes || '';
         
-        // Vykreslíme tlačítka pro přesun
         renderMovePills(day);
         
         modal.style.display = 'flex';
@@ -155,15 +178,7 @@ function renderMovePills(currentDay) {
     if (!container) return;
     container.innerHTML = '';
     
-    const dayShort = {
-        'Pondělí': 'Po',
-        'Úterý': 'Út',
-        'Středa': 'St',
-        'Čtvrtek': 'Čt',
-        'Pátek': 'Pá',
-        'Sobota': 'So',
-        'Neděle': 'Ne'
-    };
+    const dayShort = { 'Pondělí': 'Po', 'Úterý': 'Út', 'Středa': 'St', 'Čtvrtek': 'Čt', 'Pátek': 'Pá', 'Sobota': 'So', 'Neděle': 'Ne' };
     
     daysOfWeek.forEach(day => {
         const btn = document.createElement('button');
@@ -185,7 +200,6 @@ function moveCurrentItemTo(targetDay) {
 
     const itemIndex = prayerData[day].items.findIndex(i => i.id === id);
     if (itemIndex !== -1) {
-        // Uložíme i případně dopsané poznámky
         const itemToMove = prayerData[day].items.splice(itemIndex, 1)[0];
         itemToMove.notes = modalNotes.value;
 
@@ -215,7 +229,7 @@ function saveNotes() {
 
 function checkAndResetMonday(data) {
     const today = new Date();
-    if (today.getDay() === 1) { // Pondělí
+    if (today.getDay() === 1) { 
         const dateString = today.toISOString().split('T')[0];
         const lastReset = localStorage.getItem('prayerAppLastReset');
 
@@ -236,10 +250,6 @@ function checkAndResetMonday(data) {
     return false;
 }
 
-// ----------------------------------------------------
-// BEZPEČNÉ NAČÍTÁNÍ – GOOGLE MÁ VŽDY PŘEDNOST
-// ----------------------------------------------------
-
 let userPin = localStorage.getItem('prayerAppPin');
 if (!userPin) {
     userPin = prompt("Zadej přístupový PIN pro načtení seznamu:");
@@ -249,7 +259,6 @@ if (!userPin) {
 function loadDataFromSheets() {
     document.getElementById('loader').style.display = 'block';
 
-    // Stáhneme data z tabulky
     fetch(WEB_APP_URL + '?pin=' + encodeURIComponent(userPin))
         .then(response => response.json())
         .then(data => {
@@ -260,7 +269,6 @@ function loadDataFromSheets() {
                 return;
             }
             
-            // Tabulka má vždy přednost před telefonem
             if (data && Object.keys(data).length > 0) {
                 prayerData = data;
                 if (checkAndResetMonday(prayerData)) {

@@ -59,101 +59,45 @@ h1 { color: var(--primary); margin: 0; font-size: 1.5rem; }
 
 .custom-checkbox { position: relative; width: 38px; height: 38px; cursor: pointer; display: block; }
 .custom-checkbox input { opacity: 0; width: 0; height: 0; }
-.checkmark { position: absolute; top: 0; left: 0; height: 100%; width: 100%; background-color: transparent; border: 2px solid var(--border-color); border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-
-.custom-checkbox { position: relative; width: 38px; height: 38px; cursor: pointer; display: block; }
-.custom-checkbox input { opacity: 0; width: 0; height: 0; }
-
-/* Kroužek dne: Přidán background-image pro postupné vyplňování (graf) */
 .checkmark { 
     position: absolute; top: 0; left: 0; height: 100%; width: 100%; 
     background-color: transparent; 
-    background-image: conic-gradient(#e2bb7b var(--progress, 0%), transparent 0%);
+    background-image: conic-gradient(var(--primary) var(--progress, 0%), transparent 0%);
     border: 2px solid var(--border-color); 
     border-radius: 50%; 
     display: flex; align-items: center; justify-content: center; 
     transition: all 0.3s ease; 
 }
-
-/* Vnitřní výřez, který z grafu udělá elegantní tenký kroužek */
 .checkmark::before {
-    content: '';
-    position: absolute;
-    top: 4px; left: 4px; right: 4px; bottom: 4px;
-    background-color: var(--card-bg);
-    border-radius: 50%;
-    transition: background-color 0.3s;
+    content: ''; position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px;
+    background-color: var(--card-bg); border-radius: 50%; transition: background-color 0.3s;
 }
 
 [data-theme="dark"] .checkmark { border-color: var(--primary); }
 
-/* Jakmile je den splněn na 100 % (input je checked) */
-.custom-checkbox input:checked ~ .checkmark { 
-    background-image: none; /* Vypne graf */
-    background-color: #e2bb7b; /* Vyplní kolečko zlatou barvou */
-    border-color: #e2bb7b; 
-}
-
-/* U 100 % skryjeme vnitřní výřez, aby bylo kolečko plné */
-.custom-checkbox input:checked ~ .checkmark::before {
-    display: none;
-}
-
-/* Zobrazení emoji 🙏 uprostřed u 100 % */
-.custom-checkbox input:checked ~ .checkmark::after { 
-    content: '🙏'; 
-    font-size: 20px; 
-    position: relative; /* Zajišťuje, že emoji bude stát nad pozadím */
-    z-index: 1;
-}
-
-[data-theme="dark"] .checkmark { border-color: var(--primary); }
-.custom-checkbox input:checked ~ .checkmark { background-color: #e2bb7b; border-color: #e2bb7b; }
-.custom-checkbox input:checked ~ .checkmark::after { content: '🙏'; font-size: 20px; }
+.custom-checkbox input:checked ~ .checkmark { background-image: none; background-color: #e2bb7b; border-color: #e2bb7b; }
+.custom-checkbox input:checked ~ .checkmark::before { display: none; }
+.custom-checkbox input:checked ~ .checkmark::after { content: '🙏'; font-size: 20px; position: relative; z-index: 1; }
 
 .item-list { list-style-type: none; padding: 0; margin: 0 0 15px 0; }
 .item { background-color: var(--item-bg); margin-bottom: 10px; padding: 15px; border-radius: var(--border-radius); display: flex; align-items: center; gap: 15px; }
 
+/* DRAG HANDLE STYL */
+.drag-handle { cursor: grab; color: var(--text-muted); font-size: 1.2rem; display: flex; align-items: center; user-select: none; }
+.drag-handle:active { cursor: grabbing; }
+
 .item-name { flex-grow: 1; font-size: 1.1rem; cursor: pointer; }
 .done-text { opacity: 0.5; }
 
-/* KULATÉ ZAŠKRTÁVÁTKO DOPRAVA */
 .item-checkbox { 
-    appearance: none;
-    -webkit-appearance: none;
-    width: 26px; 
-    height: 26px; 
-    border: 2px solid var(--border-color);
-    border-radius: 50%; /* Dělá prvek kulatý */
-    cursor: pointer; 
-    position: relative;
-    flex-shrink: 0;
-    margin: 0;
-    transition: all 0.2s ease;
-    outline: none;
+    appearance: none; -webkit-appearance: none; width: 26px; height: 26px; 
+    border: 2px solid var(--border-color); border-radius: 50%; cursor: pointer; 
+    position: relative; flex-shrink: 0; margin: 0; transition: all 0.2s ease; outline: none;
 }
-
 [data-theme="dark"] .item-checkbox { border-color: var(--primary); }
-
-.item-checkbox:checked {
-    background-color: var(--primary);
-    border-color: var(--primary);
-}
-
-.item-checkbox:checked::after {
-    content: '✔';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: #ffffc7;
-    font-size: 14px;
-    font-weight: bold;
-}
-
-[data-theme="dark"] .item-checkbox:checked::after {
-    color: #1a1816;
-}
+.item-checkbox:checked { background-color: var(--primary); border-color: var(--primary); }
+.item-checkbox:checked::after { content: '✔'; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #ffffc7; font-size: 14px; font-weight: bold; }
+[data-theme="dark"] .item-checkbox:checked::after { color: #1a1816; }
 
 .add-form { display: flex; gap: 10px; }
 .add-input { flex-grow: 1; padding: 12px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--input-bg); color: var(--text-color); font-size: 1rem; }
@@ -165,81 +109,14 @@ h1 { color: var(--primary); margin: 0; font-size: 1.5rem; }
 .close-btn { position: absolute; top: 15px; right: 15px; font-size: 1.8rem; color: var(--text-color); cursor: pointer; }
 textarea { width: 100%; padding: 15px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--input-bg); color: var(--text-color); margin-bottom: 15px; resize: vertical; box-sizing: border-box; font-family: inherit; font-size: 1rem; }
 
-/* ... tvůj existující CSS kód ... */
-textarea { width: 100%; padding: 15px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background-color: var(--input-bg); color: var(--text-color); margin-bottom: 15px; resize: vertical; box-sizing: border-box; font-family: inherit; font-size: 1rem; }
+.delete-link-btn { background: none; border: none; color: #ef4444; font-size: 0.95rem; cursor: pointer; text-decoration: underline; opacity: 0.8; transition: opacity 0.2s; padding: 10px; }
+.delete-link-btn:active { opacity: 1; }
 
-/* STYL PRO BEZPEČNÉ TLAČÍTKO SMAZAT */
-.delete-link-btn {
-    background: none;
-    border: none;
-    color: #ef4444; /* Červená barva textu */
-    font-size: 0.95rem;
-    cursor: pointer;
-    text-decoration: underline;
-    opacity: 0.8;
-    transition: opacity 0.2s;
-    padding: 10px;
-}
-
-.delete-link-btn:active {
-    opacity: 1;
-}
-
-/* MADLO PRO PŘESOUVÁNÍ */
-.drag-handle {
-    cursor: grab;
-    color: var(--text-muted);
-    font-size: 1.2rem;
-    padding-right: 10px;
-    display: flex;
-    align-items: center;
-    user-select: none;
-}
-.drag-handle:active {
-    cursor: grabbing;
-}
-
-/* RYCHLÝ PŘESUN MEZI DNY */
-.move-container {
-    margin: 20px 0 15px 0;
-    padding-top: 15px;
-    border-top: 1px solid var(--border-color);
-}
-.move-label {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    margin-bottom: 10px;
-    display: block;
-}
-.day-pills {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-}
-.day-pill {
-    flex: 1 1 calc(25% - 6px);
-    background-color: var(--item-bg);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 10px 4px;
-    font-size: 0.9rem;
-    font-weight: bold;
-    cursor: pointer;
-    text-align: center;
-    transition: background-color 0.2s, transform 0.1s;
-}
-.day-pill:active {
-    transform: scale(0.95);
-    background-color: var(--primary);
-    color: #ffffc7;
-}
-[data-theme="dark"] .day-pill:active {
-    color: #1a1816;
-}
-.day-pill.current {
-    opacity: 0.3;
-    pointer-events: none;
-    background-color: transparent;
-    border-style: dashed;
-}
+/* STYLY TLAČÍTEK PRO PŘESUN */
+.move-container { margin: 20px 0 15px 0; padding-top: 15px; border-top: 1px solid var(--border-color); }
+.move-label { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px; display: block; }
+.day-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+.day-pill { flex: 1 1 calc(25% - 6px); background-color: var(--item-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 4px; font-size: 0.9rem; font-weight: bold; cursor: pointer; text-align: center; transition: background-color 0.2s, transform 0.1s; }
+.day-pill:active { transform: scale(0.95); background-color: var(--primary); color: #ffffc7; }
+[data-theme="dark"] .day-pill:active { color: #1a1816; }
+.day-pill.current { opacity: 0.3; pointer-events: none; background-color: transparent; border-style: dashed; }
