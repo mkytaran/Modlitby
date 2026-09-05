@@ -184,3 +184,17 @@ textarea { width: 100%; padding: 15px; border: 1px solid var(--border-color); bo
 .delete-link-btn:active {
     opacity: 1;
 }
+
+/* MADLO PRO PŘESOUVÁNÍ */
+.drag-handle {
+    cursor: grab;
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    padding-right: 10px;
+    display: flex;
+    align-items: center;
+    user-select: none;
+}
+.drag-handle:active {
+    cursor: grabbing;
+}

@@ -35,7 +35,7 @@ function renderApp() {
     daysOfWeek.forEach(day => {
         const dayObj = prayerData[day];
         if (!dayObj) return;
-        
+
         const section = document.createElement('div');
         section.className = `day-section ${openDays.includes(day) ? 'active' : ''}`;
         section.dataset.day = day;
@@ -45,7 +45,6 @@ function renderApp() {
         let doneItems = itemsArray.filter(i => i.isDone).length;
         let progress = 0;
         
-        // Správný výpočet pro graf i pro dny bez položek
         if (totalItems > 0) {
             progress = (doneItems / totalItems) * 100;
             dayObj.isDone = (doneItems === totalItems);
@@ -53,8 +52,10 @@ function renderApp() {
             progress = 100;
         }
 
+        // PŘIDÁNO MADLO (drag-handle) DO KAŽDÉ POLOŽKY
         let itemsHtml = itemsArray.map(item => `
-            <li class="item">
+            <li class="item" data-id="${item.id}">
+                <div class="drag-handle">☰</div>
                 <div class="item-name ${item.isDone ? 'done-text' : ''}" onclick="openModal('${day}', '${item.id}')">
                     ${item.name} ${item.notes ? '📝' : ''}
                 </div>
@@ -64,6 +65,7 @@ function renderApp() {
 
         const isChecked = dayObj.isDone ? 'checked' : '';
 
+        // PŘIDÁNO data-day="${day}" DO ul.item-list
         section.innerHTML = `
             <div class="day-header" onclick="toggleDay(this)">
                 <div class="header-left">
@@ -76,7 +78,7 @@ function renderApp() {
                 <span class="toggle-arrow">▼</span>
             </div>
             <div class="day-content">
-                <ul class="item-list">
+                <ul class="item-list" data-day="${day}">
                     ${itemsHtml}
                 </ul>
                 <div class="add-form">
@@ -86,6 +88,34 @@ function renderApp() {
             </div>
         `;
         appContainer.appendChild(section);
+    });
+
+    // --- AKTIVACE DRAG & DROP ---
+    document.querySelectorAll('.item-list').forEach(ulElement => {
+        new Sortable(ulElement, {
+            group: 'prayers', // Stejná skupina umožňuje přetahování mezi různými dny
+            handle: '.drag-handle', // Uchopit lze pouze za symbol ☰
+            animation: 150, // Plynulá animace přesunu
+            onEnd: function (evt) {
+                const fromDay = evt.from.dataset.day;
+                const toDay = evt.to.dataset.day;
+                const oldIndex = evt.oldIndex;
+                const newIndex = evt.newIndex;
+
+                if (fromDay === toDay && oldIndex === newIndex) return; // Nic se reálně nezměnilo
+
+                // 1. Vyjmeme položku z původního dne
+                const movedItem = prayerData[fromDay].items.splice(oldIndex, 1)[0];
+                
+                // 2. Vložíme ji do nového dne na správnou pozici
+                if (!prayerData[toDay].items) prayerData[toDay].items = [];
+                prayerData[toDay].items.splice(newIndex, 0, movedItem);
+
+                // 3. Bezpečně uložíme do Googlu a překreslíme (kvůli přepočtu kroužků u obou dnů)
+                saveDataToSheets();
+                renderApp();
+            }
+        });
     });
 }
 
@@ -197,34 +227,10 @@ if (!userPin) {
 }
 
 function loadDataFromSheets() {
-    const cached = localStorage.getItem('prayerAppCache');
-    const pendingSync = localStorage.getItem('prayerPendingSync');
+    // 1. Zobrazíme načítání
+    document.getElementById('loader').style.display = 'block';
 
-    if (cached) {
-        prayerData = JSON.parse(cached);
-        
-        // ZÁSADNÍ OPRAVA: Odstranění chybného razítka, které rozbíjelo Google Script
-        if (prayerData._lastUpdate !== undefined) {
-            delete prayerData._lastUpdate;
-            localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
-        }
-
-        if (checkAndResetMonday(prayerData)) {
-            localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
-            localStorage.setItem('prayerPendingSync', 'true');
-        }
-        renderApp();
-    } else {
-        document.getElementById('loader').style.display = 'block';
-    }
-
-    // Pokud je vztyčená vlajka, že se minule nestihlo uložit, pošleme to tam hned
-    if (pendingSync === 'true') {
-        saveDataToSheets();
-        document.getElementById('loader').style.display = 'none';
-        return; 
-    }
-
+    // 2. STÁHNOUT ČERSTVÁ DATA Z GOOGLU (Google má vždy přednost!)
     fetch(WEB_APP_URL + '?pin=' + encodeURIComponent(userPin))
         .then(response => response.json())
         .then(data => {
@@ -235,22 +241,22 @@ function loadDataFromSheets() {
                 return;
             }
             
-            const freshString = JSON.stringify(data);
-            
-            // Ochrana před přepsáním čerstvě naklikaných dat
-            if (data && Object.keys(data).length > 0 && cached !== freshString && !localStorage.getItem('prayerPendingSync')) {
+            // Pokud Google vrátil platná data, použijeme je a uložíme do mobilu
+            if (data && Object.keys(data).length > 0) {
                 prayerData = data;
-                if (checkAndResetMonday(prayerData)) {
-                    saveDataToSheets();
-                } else {
-                    localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
-                }
+                localStorage.setItem('prayerAppCache', JSON.stringify(prayerData));
                 renderApp();
             }
             document.getElementById('loader').style.display = 'none';
         })
         .catch(error => {
-            console.error("Chyba spojení s Googlem. Používám lokální data.", error);
+            console.error("Chyba spojení s Googlem. Zkouším načíst zálohu z telefonu:", error);
+            // Jen když Google selže (jsme offline), sáhneme do paměti telefonu
+            const cached = localStorage.getItem('prayerAppCache');
+            if (cached) {
+                prayerData = JSON.parse(cached);
+                renderApp();
+            }
             document.getElementById('loader').style.display = 'none';
         });
 }
