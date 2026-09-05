@@ -86,7 +86,6 @@ function renderApp() {
         appContainer.appendChild(section);
     });
 
-    // AKTIVACE DRAG & DROP
     document.querySelectorAll('.item-list').forEach(ulElement => {
         if (typeof Sortable !== 'undefined') {
             new Sortable(ulElement, {
@@ -257,8 +256,19 @@ if (!userPin) {
 }
 
 function loadDataFromSheets() {
-    document.getElementById('loader').style.display = 'block';
+    // 1. Okamžité načtení z Cache
+    const cached = localStorage.getItem('prayerAppCache');
+    if (cached) {
+        prayerData = JSON.parse(cached);
+        if (checkAndResetMonday(prayerData)) {
+            localStorage.setItem('prayerAppCache', JSON.stringify(prayerData)); 
+        }
+        renderApp();
+    } else {
+        document.getElementById('loader').style.display = 'block';
+    }
 
+    // 2. Skryté načtení novinek z Googlu
     fetch(WEB_APP_URL + '?pin=' + encodeURIComponent(userPin))
         .then(response => response.json())
         .then(data => {
@@ -269,7 +279,10 @@ function loadDataFromSheets() {
                 return;
             }
             
-            if (data && Object.keys(data).length > 0) {
+            // 3. Překreslení JEN A POUZE v případě, že se data na Googlu od těch lokálních skutečně liší.
+            // Pokud jsou stejná, telefon zbytečně nepřekresluje a tím nesmaže tvůj čerstvý pokrok.
+            const freshString = JSON.stringify(data);
+            if (data && Object.keys(data).length > 0 && cached !== freshString) {
                 prayerData = data;
                 if (checkAndResetMonday(prayerData)) {
                     saveDataToSheets();
@@ -282,11 +295,6 @@ function loadDataFromSheets() {
         })
         .catch(error => {
             console.error("Chyba spojení s Googlem. Načítám zálohu z telefonu:", error);
-            const cached = localStorage.getItem('prayerAppCache');
-            if (cached) {
-                prayerData = JSON.parse(cached);
-                renderApp();
-            }
             document.getElementById('loader').style.display = 'none';
         });
 }
