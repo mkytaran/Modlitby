@@ -37,7 +37,24 @@
             <textarea id="modal-notes" rows="6" placeholder="Tvé poznámky..."></textarea>
             
             <button class="btn" onclick="saveNotes()" style="width: 100%; margin-bottom: 25px;">Uložit poznámky</button>
+            <div class="modal-overlay" id="noteModal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 id="modal-title" style="color: var(--primary); margin-top:0;">Název</h2>
+            <textarea id="modal-notes" rows="6" placeholder="Tvé poznámky..."></textarea>
             
+            <button class="btn" onclick="saveNotes()" style="width: 100%;">Uložit poznámky</button>
+            
+            <div class="move-container">
+                <span class="move-label">Přesunout do jiného dne:</span>
+                <div class="day-pills" id="movePillsContainer"></div>
+            </div>
+
+            <div style="text-align: center; border-top: 1px solid var(--border-color); padding-top: 15px;">
+                <button class="delete-link-btn" onclick="deleteCurrentItem()">🗑️ Smazat položku</button>
+            </div>
+        </div>
+    </div>
             <!-- NOVÝ VZHLED TLAČÍTKA PRO SMAZÁNÍ -->
             <div style="text-align: center; border-top: 1px solid var(--border-color); padding-top: 15px;">
                 <button class="delete-link-btn" onclick="deleteCurrentItem()">🗑️ Smazat položku</button>
@@ -46,6 +63,6 @@
     </div>
 <!-- Knihovna pro plynulé přesouvání na dotykovém displeji -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <script src="script.js?v=1.1"></script>
+    <script src="script.js?v=1.2"></script>
 </body>
 </html>

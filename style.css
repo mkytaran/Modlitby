@@ -198,3 +198,48 @@ textarea { width: 100%; padding: 15px; border: 1px solid var(--border-color); bo
 .drag-handle:active {
     cursor: grabbing;
 }
+
+/* RYCHLÝ PŘESUN MEZI DNY */
+.move-container {
+    margin: 20px 0 15px 0;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+.move-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    display: block;
+}
+.day-pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.day-pill {
+    flex: 1 1 calc(25% - 6px);
+    background-color: var(--item-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 10px 4px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.2s, transform 0.1s;
+}
+.day-pill:active {
+    transform: scale(0.95);
+    background-color: var(--primary);
+    color: #ffffc7;
+}
+[data-theme="dark"] .day-pill:active {
+    color: #1a1816;
+}
+.day-pill.current {
+    opacity: 0.3;
+    pointer-events: none;
+    background-color: transparent;
+    border-style: dashed;
+}
